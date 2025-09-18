@@ -87,16 +87,13 @@ export function AdvancedTable<T extends Record<string, any>>({
       <th
         key={column.key}
         className={cn(
-          "px-4 py-3 text-left text-sm font-medium text-foreground bg-card/95 backdrop-blur-sm border-b border-border",
-          column.sortable && "cursor-pointer hover:bg-muted/50 transition-colors",
-          isLeftFrozen && "sticky z-40 bg-card/95 backdrop-blur-sm",
-          isRightFrozen && "sticky right-0 z-30 bg-card/95 backdrop-blur-sm"
+          "px-4 py-3 text-left text-sm font-medium text-foreground bg-card/95 backdrop-blur-sm",
+          column.sortable && "cursor-pointer hover:bg-muted/50 transition-colors"
         )}
         style={{
           width: column.width,
           minWidth: column.minWidth,
           maxWidth: column.maxWidth,
-          ...(isLeftFrozen && { left: leftOffset }),
         }}
         onClick={() => handleSort(column)}
       >
@@ -279,6 +276,23 @@ export function AdvancedTable<T extends Record<string, any>>({
 
   return (
     <Card className={cn("overflow-hidden", className)}>
+      {/* Fixed Header Table */}
+      <div className="relative border-b border-border bg-card/95 backdrop-blur-sm shadow-sm z-10">
+        <table className="w-full table-fixed border-collapse" style={{ minWidth: scroll?.x }}>
+          <thead>
+            <tr>
+              {expandable && (
+                <th className="w-12 px-4 py-3 bg-card/95 backdrop-blur-sm" />
+              )}
+              {leftFrozenColumns.map(renderColumnHeader)}
+              {scrollableColumns.map(renderColumnHeader)}
+              {rightFrozenColumns.map(renderColumnHeader)}
+            </tr>
+          </thead>
+        </table>
+      </div>
+      
+      {/* Scrollable Body */}
       <div
         ref={tableRef}
         className="overflow-auto"
@@ -286,15 +300,46 @@ export function AdvancedTable<T extends Record<string, any>>({
           maxHeight: scroll?.y || undefined
         }}
       >
-        <table className="w-full table-fixed" style={{ minWidth: scroll?.x }}>
-          <thead ref={headerRef} className="bg-card/95 backdrop-blur-sm sticky top-0 z-20 shadow-sm">
+        <table className="w-full table-fixed border-collapse" style={{ minWidth: scroll?.x }}>
+          {/* Invisible header for column alignment */}
+          <thead className="invisible">
             <tr>
               {expandable && (
-                <th className="w-12 px-4 py-3 bg-card/95 backdrop-blur-sm border-b border-border sticky left-0 z-40" />
+                <th className="w-12 px-4 py-3" />
               )}
-              {leftFrozenColumns.map(renderColumnHeader)}
-              {scrollableColumns.map(renderColumnHeader)}
-              {rightFrozenColumns.map(renderColumnHeader)}
+              {leftFrozenColumns.map(column => (
+                <th
+                  key={column.key}
+                  style={{
+                    width: column.width,
+                    minWidth: column.minWidth,
+                    maxWidth: column.maxWidth,
+                  }}
+                  className="px-4 py-3"
+                />
+              ))}
+              {scrollableColumns.map(column => (
+                <th
+                  key={column.key}
+                  style={{
+                    width: column.width,
+                    minWidth: column.minWidth,
+                    maxWidth: column.maxWidth,
+                  }}
+                  className="px-4 py-3"
+                />
+              ))}
+              {rightFrozenColumns.map(column => (
+                <th
+                  key={column.key}
+                  style={{
+                    width: column.width,
+                    minWidth: column.minWidth,
+                    maxWidth: column.maxWidth,
+                  }}
+                  className="px-4 py-3"
+                />
+              ))}
             </tr>
           </thead>
           <tbody>
@@ -327,9 +372,9 @@ export function AdvancedTable<T extends Record<string, any>>({
                       {rightFrozenColumns.map(column => renderCell(column, record, index))}
                     </tr>
                     {expandable && isExpanded && (
-                      <tr>
-                        <td colSpan={columns.length + 1} className="p-0 border-b border-border">
-                          <div className="p-4 bg-muted/20">
+                      <tr className="bg-muted/20">
+                        <td colSpan={columns.length + 1} className="p-0">
+                          <div className="sticky left-0 right-0 z-30 p-4 bg-muted/20 border-b border-border">
                             {expandable.expandedRowRender(record, index)}
                           </div>
                         </td>
