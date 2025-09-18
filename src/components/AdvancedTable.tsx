@@ -180,15 +180,23 @@ export function AdvancedTable<T extends Record<string, any>>({
     const isExpanded = expandedRows.has(key);
 
     return (
-      <td className="px-4 py-3 border-b border-border">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => handleExpand(record)}
-          className="h-6 w-6 p-0"
-        >
-          {isExpanded ? <Minus size={14} /> : <Plus size={14} />}
-        </Button>
+      <td className="px-4 py-3 border-b border-border sticky left-0 z-10 bg-card">
+        {expandable?.expandRowByClick ? (
+          // Just show an indicator when row click expands
+          <div className="flex items-center justify-center h-6 w-6">
+            {isExpanded ? <Minus size={14} className="text-muted-foreground" /> : <Plus size={14} className="text-muted-foreground" />}
+          </div>
+        ) : (
+          // Show clickable button when manual expand
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleExpand(record)}
+            className="h-6 w-6 p-0"
+          >
+            {isExpanded ? <Minus size={14} /> : <Plus size={14} />}
+          </Button>
+        )}
       </td>
     );
   };
@@ -313,7 +321,7 @@ export function AdvancedTable<T extends Record<string, any>>({
                       )}
                       onClick={() => expandable?.expandRowByClick && handleExpand(record)}
                     >
-                      {expandable && !expandable.expandRowByClick && renderExpandButton(record, index)}
+                      {expandable && renderExpandButton(record, index)}
                       {leftFrozenColumns.map(column => renderCell(column, record, index))}
                       {scrollableColumns.map(column => renderCell(column, record, index))}
                       {rightFrozenColumns.map(column => renderCell(column, record, index))}
