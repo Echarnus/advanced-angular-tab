@@ -153,6 +153,7 @@ export function TableDemo() {
       title: 'Last Login',
       width: 120,
       sortable: true,
+      frozen: 'right',
     },
     {
       key: 'salary',

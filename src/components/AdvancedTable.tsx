@@ -26,7 +26,8 @@ export function AdvancedTable<T extends Record<string, any>>({
   const tableRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLTableSectionElement>(null);
 
-  const frozenColumns = columns.filter(col => col.frozen);
+  const leftFrozenColumns = columns.filter(col => col.frozen === true || col.frozen === 'left');
+  const rightFrozenColumns = columns.filter(col => col.frozen === 'right');
   const scrollableColumns = columns.filter(col => !col.frozen);
 
   const getRowKey = (record: T, index: number): string => {
@@ -65,58 +66,94 @@ export function AdvancedTable<T extends Record<string, any>>({
     setExpandedRows(newExpandedRows);
   };
 
-  const renderColumnHeader = (column: TableColumn<T>) => (
-    <th
-      key={column.key}
-      className={cn(
-        "px-4 py-3 text-left text-sm font-medium text-foreground bg-card/95 backdrop-blur-sm border-b border-border",
-        column.sortable && "cursor-pointer hover:bg-muted/50 transition-colors",
-        column.frozen && "sticky left-0 z-30 bg-card/95 backdrop-blur-sm"
-      )}
-      style={{
-        width: column.width,
-        minWidth: column.minWidth,
-        maxWidth: column.maxWidth,
-      }}
-      onClick={() => handleSort(column)}
-    >
-      <div className="flex items-center gap-2">
-        <span className={cn(column.ellipsis && "truncate")}>{column.title}</span>
-        {column.sortable && (
-          <div className="flex flex-col">
-            {sortState.field === column.key ? (
-              sortState.direction === 'asc' ? (
-                <CaretUp size={14} className="text-primary" />
-              ) : sortState.direction === 'desc' ? (
-                <CaretDown size={14} className="text-primary" />
+  const renderColumnHeader = (column: TableColumn<T>) => {
+    const isLeftFrozen = column.frozen === true || column.frozen === 'left';
+    const isRightFrozen = column.frozen === 'right';
+    
+    // Calculate left offset for left frozen columns
+    let leftOffset = 0;
+    if (isLeftFrozen) {
+      if (expandable) leftOffset += 48; // Expand button width
+      
+      // Add widths of previous left frozen columns
+      for (const leftCol of leftFrozenColumns) {
+        if (leftCol.key === column.key) break;
+        const width = leftCol.width;
+        leftOffset += typeof width === 'number' ? width : parseInt(String(width) || '100');
+      }
+    }
+    
+    return (
+      <th
+        key={column.key}
+        className={cn(
+          "px-4 py-3 text-left text-sm font-medium text-foreground bg-card/95 backdrop-blur-sm border-b border-border",
+          column.sortable && "cursor-pointer hover:bg-muted/50 transition-colors",
+          isLeftFrozen && "sticky z-30 bg-card/95 backdrop-blur-sm",
+          isRightFrozen && "sticky right-0 z-30 bg-card/95 backdrop-blur-sm"
+        )}
+        style={{
+          width: column.width,
+          minWidth: column.minWidth,
+          maxWidth: column.maxWidth,
+          ...(isLeftFrozen && { left: leftOffset }),
+        }}
+        onClick={() => handleSort(column)}
+      >
+        <div className="flex items-center gap-2">
+          <span className={cn(column.ellipsis && "truncate")}>{column.title}</span>
+          {column.sortable && (
+            <div className="flex flex-col">
+              {sortState.field === column.key ? (
+                sortState.direction === 'asc' ? (
+                  <CaretUp size={14} className="text-primary" />
+                ) : sortState.direction === 'desc' ? (
+                  <CaretDown size={14} className="text-primary" />
+                ) : (
+                  <div className="flex flex-col">
+                    <CaretUp size={12} className="text-muted-foreground" />
+                    <CaretDown size={12} className="text-muted-foreground -mt-1" />
+                  </div>
+                )
               ) : (
                 <div className="flex flex-col">
                   <CaretUp size={12} className="text-muted-foreground" />
                   <CaretDown size={12} className="text-muted-foreground -mt-1" />
                 </div>
-              )
-            ) : (
-              <div className="flex flex-col">
-                <CaretUp size={12} className="text-muted-foreground" />
-                <CaretDown size={12} className="text-muted-foreground -mt-1" />
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </th>
-  );
+              )}
+            </div>
+          )}
+        </div>
+      </th>
+    );
+  };
 
   const renderCell = (column: TableColumn<T>, record: T, index: number) => {
     const value = record[column.key];
     const content = column.render ? column.render(value, record, index) : value;
+    const isLeftFrozen = column.frozen === true || column.frozen === 'left';
+    const isRightFrozen = column.frozen === 'right';
+    
+    // Calculate left offset for left frozen columns
+    let leftOffset = 0;
+    if (isLeftFrozen) {
+      if (expandable) leftOffset += 48; // Expand button width
+      
+      // Add widths of previous left frozen columns
+      for (const leftCol of leftFrozenColumns) {
+        if (leftCol.key === column.key) break;
+        const width = leftCol.width;
+        leftOffset += typeof width === 'number' ? width : parseInt(String(width) || '100');
+      }
+    }
     
     return (
       <td
         key={column.key}
         className={cn(
           "px-4 py-3 text-sm border-b border-border",
-          column.frozen && "sticky left-0 z-10 bg-card",
+          isLeftFrozen && "sticky z-10 bg-card",
+          isRightFrozen && "sticky right-0 z-10 bg-card",
           column.ellipsis && "max-w-0",
           column.multiline ? "whitespace-normal" : "whitespace-nowrap"
         )}
@@ -124,6 +161,7 @@ export function AdvancedTable<T extends Record<string, any>>({
           width: column.width,
           minWidth: column.minWidth,
           maxWidth: column.maxWidth,
+          ...(isLeftFrozen && { left: leftOffset }),
         }}
       >
         {column.ellipsis ? (
@@ -246,8 +284,9 @@ export function AdvancedTable<T extends Record<string, any>>({
               {expandable && (
                 <th className="w-12 px-4 py-3 bg-card/95 backdrop-blur-sm border-b border-border sticky left-0 z-30" />
               )}
-              {frozenColumns.map(renderColumnHeader)}
+              {leftFrozenColumns.map(renderColumnHeader)}
               {scrollableColumns.map(renderColumnHeader)}
+              {rightFrozenColumns.map(renderColumnHeader)}
             </tr>
           </thead>
           <tbody>
@@ -275,8 +314,9 @@ export function AdvancedTable<T extends Record<string, any>>({
                       onClick={() => expandable?.expandRowByClick && handleExpand(record)}
                     >
                       {expandable && !expandable.expandRowByClick && renderExpandButton(record, index)}
-                      {frozenColumns.map(column => renderCell(column, record, index))}
+                      {leftFrozenColumns.map(column => renderCell(column, record, index))}
                       {scrollableColumns.map(column => renderCell(column, record, index))}
+                      {rightFrozenColumns.map(column => renderCell(column, record, index))}
                     </tr>
                     {expandable && isExpanded && (
                       <tr>

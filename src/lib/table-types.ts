@@ -5,7 +5,7 @@ export interface TableColumn<T = any> {
   minWidth?: string | number;
   maxWidth?: string | number;
   sortable?: boolean;
-  frozen?: boolean;
+  frozen?: boolean | 'left' | 'right';
   render?: (value: any, record: T, index: number) => React.ReactNode;
   ellipsis?: boolean;
   multiline?: boolean;
