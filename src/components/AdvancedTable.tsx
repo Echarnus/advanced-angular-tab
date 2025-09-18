@@ -89,7 +89,7 @@ export function AdvancedTable<T extends Record<string, any>>({
         className={cn(
           "px-4 py-3 text-left text-sm font-medium text-foreground bg-card/95 backdrop-blur-sm border-b border-border",
           column.sortable && "cursor-pointer hover:bg-muted/50 transition-colors",
-          isLeftFrozen && "sticky z-30 bg-card/95 backdrop-blur-sm",
+          isLeftFrozen && "sticky z-40 bg-card/95 backdrop-blur-sm",
           isRightFrozen && "sticky right-0 z-30 bg-card/95 backdrop-blur-sm"
         )}
         style={{
@@ -152,7 +152,7 @@ export function AdvancedTable<T extends Record<string, any>>({
         key={column.key}
         className={cn(
           "px-4 py-3 text-sm border-b border-border",
-          isLeftFrozen && "sticky z-10 bg-card",
+          isLeftFrozen && "sticky z-20 bg-card",
           isRightFrozen && "sticky right-0 z-10 bg-card",
           column.ellipsis && "max-w-0",
           column.multiline ? "whitespace-normal" : "whitespace-nowrap"
@@ -180,7 +180,7 @@ export function AdvancedTable<T extends Record<string, any>>({
     const isExpanded = expandedRows.has(key);
 
     return (
-      <td className="px-4 py-3 border-b border-border sticky left-0 z-10 bg-card">
+      <td className="px-4 py-3 border-b border-border sticky left-0 z-20 bg-card">
         {expandable?.expandRowByClick ? (
           // Just show an indicator when row click expands
           <div className="flex items-center justify-center h-6 w-6">
@@ -290,7 +290,7 @@ export function AdvancedTable<T extends Record<string, any>>({
           <thead ref={headerRef} className="bg-card/95 backdrop-blur-sm sticky top-0 z-20 shadow-sm">
             <tr>
               {expandable && (
-                <th className="w-12 px-4 py-3 bg-card/95 backdrop-blur-sm border-b border-border sticky left-0 z-30" />
+                <th className="w-12 px-4 py-3 bg-card/95 backdrop-blur-sm border-b border-border sticky left-0 z-40" />
               )}
               {leftFrozenColumns.map(renderColumnHeader)}
               {scrollableColumns.map(renderColumnHeader)}
