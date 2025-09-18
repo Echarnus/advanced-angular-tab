@@ -6,7 +6,7 @@ function App() {
   useTheme();
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <div className="h-screen bg-background p-6 overflow-hidden">
       <TableDemo />
     </div>
   );

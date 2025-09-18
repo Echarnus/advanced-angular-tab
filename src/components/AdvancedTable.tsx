@@ -87,13 +87,16 @@ export function AdvancedTable<T extends Record<string, any>>({
       <th
         key={column.key}
         className={cn(
-          "px-4 py-3 text-left text-sm font-medium text-foreground bg-card/95 backdrop-blur-sm",
+          "px-4 py-3 text-left text-sm font-medium text-foreground bg-card/95 backdrop-blur-sm border-b border-border",
+          isLeftFrozen && "sticky z-30 bg-card/95",
+          isRightFrozen && "sticky right-0 z-20 bg-card/95",
           column.sortable && "cursor-pointer hover:bg-muted/50 transition-colors"
         )}
         style={{
           width: column.width,
           minWidth: column.minWidth,
           maxWidth: column.maxWidth,
+          ...(isLeftFrozen && { left: leftOffset }),
         }}
         onClick={() => handleSort(column)}
       >
@@ -177,7 +180,7 @@ export function AdvancedTable<T extends Record<string, any>>({
     const isExpanded = expandedRows.has(key);
 
     return (
-      <td className="px-4 py-3 border-b border-border sticky left-0 z-20 bg-card">
+      <td className="px-4 py-3 border-b border-border sticky left-0 z-30 bg-card w-12">
         {expandable?.expandRowByClick ? (
           // Just show an indicator when row click expands
           <div className="flex items-center justify-center h-6 w-6">
@@ -275,71 +278,24 @@ export function AdvancedTable<T extends Record<string, any>>({
   }
 
   return (
-    <Card className={cn("overflow-hidden", className)}>
-      {/* Fixed Header Table */}
-      <div className="relative border-b border-border bg-card/95 backdrop-blur-sm shadow-sm z-10">
-        <table className="w-full table-fixed border-collapse" style={{ minWidth: scroll?.x }}>
-          <thead>
-            <tr>
-              {expandable && (
-                <th className="w-12 px-4 py-3 bg-card/95 backdrop-blur-sm" />
-              )}
-              {leftFrozenColumns.map(renderColumnHeader)}
-              {scrollableColumns.map(renderColumnHeader)}
-              {rightFrozenColumns.map(renderColumnHeader)}
-            </tr>
-          </thead>
-        </table>
-      </div>
-      
-      {/* Scrollable Body */}
+    <Card className={cn("overflow-hidden flex flex-col h-full", className)}>
+      {/* Single scrollable container with sticky header */}
       <div
         ref={tableRef}
-        className="overflow-auto"
+        className="overflow-auto flex-1"
         style={{ 
           maxHeight: scroll?.y || undefined
         }}
       >
         <table className="w-full table-fixed border-collapse" style={{ minWidth: scroll?.x }}>
-          {/* Invisible header for column alignment */}
-          <thead className="invisible">
+          <thead className="sticky top-0 z-20">
             <tr>
               {expandable && (
-                <th className="w-12 px-4 py-3" />
+                <th className="w-12 px-4 py-3 bg-card/95 backdrop-blur-sm border-b border-border sticky left-0 z-30" />
               )}
-              {leftFrozenColumns.map(column => (
-                <th
-                  key={column.key}
-                  style={{
-                    width: column.width,
-                    minWidth: column.minWidth,
-                    maxWidth: column.maxWidth,
-                  }}
-                  className="px-4 py-3"
-                />
-              ))}
-              {scrollableColumns.map(column => (
-                <th
-                  key={column.key}
-                  style={{
-                    width: column.width,
-                    minWidth: column.minWidth,
-                    maxWidth: column.maxWidth,
-                  }}
-                  className="px-4 py-3"
-                />
-              ))}
-              {rightFrozenColumns.map(column => (
-                <th
-                  key={column.key}
-                  style={{
-                    width: column.width,
-                    minWidth: column.minWidth,
-                    maxWidth: column.maxWidth,
-                  }}
-                  className="px-4 py-3"
-                />
-              ))}
+              {leftFrozenColumns.map(renderColumnHeader)}
+              {scrollableColumns.map(renderColumnHeader)}
+              {rightFrozenColumns.map(renderColumnHeader)}
             </tr>
           </thead>
           <tbody>
