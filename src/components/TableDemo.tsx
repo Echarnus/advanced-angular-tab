@@ -4,6 +4,7 @@ import { TableColumn } from '@/lib/table-types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 
 interface User {
   id: string;
@@ -215,11 +216,14 @@ export function TableDemo() {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-semibold">Advanced Data Table</h1>
-        <p className="text-muted-foreground">
-          A comprehensive table component with sticky headers, sorting, pagination, expandable rows, and frozen columns.
-        </p>
+      <div className="flex items-center justify-between">
+        <div className="space-y-2">
+          <h1 className="text-2xl font-semibold">Advanced Data Table</h1>
+          <p className="text-muted-foreground">
+            A comprehensive table component with sticky headers, sorting, pagination, expandable rows, and frozen columns.
+          </p>
+        </div>
+        <ThemeSwitcher />
       </div>
 
       <AdvancedTable
