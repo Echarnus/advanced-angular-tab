@@ -69,9 +69,9 @@ export function AdvancedTable<T extends Record<string, any>>({
     <th
       key={column.key}
       className={cn(
-        "px-4 py-3 text-left text-sm font-medium text-foreground bg-card border-b border-border",
+        "px-4 py-3 text-left text-sm font-medium text-foreground bg-card/95 backdrop-blur-sm border-b border-border",
         column.sortable && "cursor-pointer hover:bg-muted/50 transition-colors",
-        column.frozen && "sticky left-0 z-30 bg-card"
+        column.frozen && "sticky left-0 z-30 bg-card/95 backdrop-blur-sm"
       )}
       style={{
         width: column.width,
@@ -235,16 +235,16 @@ export function AdvancedTable<T extends Record<string, any>>({
     <Card className={cn("overflow-hidden", className)}>
       <div
         ref={tableRef}
-        className="overflow-x-auto"
+        className="overflow-auto"
         style={{ 
           maxHeight: scroll?.y || undefined
         }}
       >
         <table className="w-full table-fixed" style={{ minWidth: scroll?.x }}>
-          <thead ref={headerRef} className="bg-card sticky top-0 z-20">
+          <thead ref={headerRef} className="bg-card/95 backdrop-blur-sm sticky top-0 z-20 shadow-sm">
             <tr>
               {expandable && (
-                <th className="w-12 px-4 py-3 bg-card border-b border-border sticky left-0 z-30" />
+                <th className="w-12 px-4 py-3 bg-card/95 backdrop-blur-sm border-b border-border sticky left-0 z-30" />
               )}
               {frozenColumns.map(renderColumnHeader)}
               {scrollableColumns.map(renderColumnHeader)}
