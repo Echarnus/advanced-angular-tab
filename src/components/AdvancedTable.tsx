@@ -236,7 +236,9 @@ export function AdvancedTable<T extends Record<string, any>>({
       <div
         ref={tableRef}
         className="overflow-x-auto"
-        style={{ maxHeight: scroll?.y }}
+        style={{ 
+          maxHeight: scroll?.y || undefined
+        }}
       >
         <table className="w-full table-fixed" style={{ minWidth: scroll?.x }}>
           <thead ref={headerRef} className="bg-card sticky top-0 z-20">

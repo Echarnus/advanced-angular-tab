@@ -248,7 +248,6 @@ export function TableDemo() {
         }}
         scroll={{
           x: 1400,
-          y: '60vh',
         }}
         onPageChange={handlePageChange}
         onSort={handleSort}
