@@ -71,7 +71,7 @@ export function AdvancedTable<T extends Record<string, any>>({
       className={cn(
         "px-4 py-3 text-left text-sm font-medium text-foreground bg-card border-b border-border",
         column.sortable && "cursor-pointer hover:bg-muted/50 transition-colors",
-        column.frozen && "sticky left-0 z-10 bg-card"
+        column.frozen && "sticky left-0 z-30 bg-card"
       )}
       style={{
         width: column.width,
@@ -218,25 +218,6 @@ export function AdvancedTable<T extends Record<string, any>>({
     );
   };
 
-  useEffect(() => {
-    if (!sticky || !headerRef.current) return;
-
-    const handleScroll = () => {
-      const header = headerRef.current;
-      if (!header) return;
-
-      const rect = header.getBoundingClientRect();
-      const shouldStick = rect.top <= (sticky.offsetHeader || 0);
-      
-      header.style.position = shouldStick ? 'sticky' : 'relative';
-      header.style.top = shouldStick ? `${sticky.offsetHeader || 0}px` : '0';
-      header.style.zIndex = shouldStick ? '20' : '10';
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [sticky]);
-
   if (loading) {
     return (
       <Card className={cn("overflow-hidden", className)}>
@@ -258,10 +239,10 @@ export function AdvancedTable<T extends Record<string, any>>({
         style={{ maxHeight: scroll?.y }}
       >
         <table className="w-full table-fixed" style={{ minWidth: scroll?.x }}>
-          <thead ref={headerRef} className="bg-card">
+          <thead ref={headerRef} className="bg-card sticky top-0 z-20">
             <tr>
               {expandable && (
-                <th className="w-12 px-4 py-3 bg-card border-b border-border sticky left-0 z-10" />
+                <th className="w-12 px-4 py-3 bg-card border-b border-border sticky left-0 z-30" />
               )}
               {frozenColumns.map(renderColumnHeader)}
               {scrollableColumns.map(renderColumnHeader)}
