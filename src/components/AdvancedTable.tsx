@@ -412,130 +412,22 @@ export function AdvancedTable<T extends Record<string, any>>({
     );
   };
 
-  if (loading) {
-    return (
-      <div className={cn("flex flex-col", className)}>
-        <Card className="flex flex-col">
-          <div
-            ref={tableRef}
-            className="overflow-x-auto flex-1"
-          >
-            <table className={cn(
-              "w-full border-collapse",
-              flexibleColumns > 0 ? "table-auto" : "table-fixed"
-            )} style={{ minWidth: scroll?.x }}>
-              {/* First thead for layout spacing - invisible */}
-              <thead className="invisible">
-                <tr>
-                  {expandable && (
-                    <th className="w-12 px-4 py-3" />
-                  )}
-                  {leftFrozenColumns.map(column => (
-                    <th
-                      key={`layout-${column.key}`}
-                      style={{
-                        width: column.width || (flexibleColumns > 0 ? 'auto' : undefined),
-                        minWidth: column.minWidth,
-                        maxWidth: column.maxWidth
-                      }}
-                      className="px-4 py-3"
-                    >
-                      {column.title}
-                    </th>
-                  ))}
-                  {scrollableColumns.map(column => (
-                    <th
-                      key={`layout-${column.key}`}
-                      style={{
-                        width: column.width || (flexibleColumns > 0 ? 'auto' : undefined),
-                        minWidth: column.minWidth,
-                        maxWidth: column.maxWidth
-                      }}
-                      className="px-4 py-3"
-                    >
-                      {column.title}
-                    </th>
-                  ))}
-                  {rightFrozenColumns.map(column => (
-                    <th
-                      key={`layout-${column.key}`}
-                      style={{
-                        width: column.width || (flexibleColumns > 0 ? 'auto' : undefined),
-                        minWidth: column.minWidth,
-                        maxWidth: column.maxWidth
-                      }}
-                      className="px-4 py-3"
-                    >
-                      {column.title}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              
-              {/* Second thead for visible sticky header - disabled state */}
-              <thead 
-                ref={headerRef}
-                className="sticky z-40 table-header-blur border-b border-border opacity-50"
-                style={{ top: `${stickyTop}px` }}
-              >
-                <tr>
-                  {expandable && (
-                    <th 
-                      className="w-12 px-4 py-3 sticky left-0 z-50 table-header-blur border-b border-border border-r-2 shadow-lg shadow-black/5 relative"
-                      style={{ top: `${stickyTop}px` }}
-                    >
-                      <span className="sr-only">Expand</span>
-                    </th>
-                  )}
-                  {leftFrozenColumns.map(renderColumnHeader)}
-                  {scrollableColumns.map(renderColumnHeader)}
-                  {rightFrozenColumns.map(renderColumnHeader)}
-                </tr>
-              </thead>
-              
-              <tbody>
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <tr key={i} className="table-row">
-                    {expandable && (
-                      <td className="px-4 py-3 sticky left-0 z-30 table-cell-blur w-12 border-r-2 shadow-lg shadow-black/5">
-                        <Skeleton className="h-4 w-4 mx-auto" />
-                      </td>
-                    )}
-                    {columns.map((column) => (
-                      <td
-                        key={column.key}
-                        className={cn(
-                          "px-4 py-3",
-                          (column.frozen === true || column.frozen === 'left') && "sticky z-30 table-cell-blur",
-                          column.frozen === 'right' && "sticky right-0 z-20 table-cell-blur"
-                        )}
-                      >
-                        <Skeleton className="h-4 w-full" />
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {pagination?.showPagination && (
-            <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-card opacity-50">
-              <Skeleton className="h-4 w-32" />
-              <div className="flex items-center gap-2">
-                <Skeleton className="h-8 w-16" />
-                <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-8 w-16" />
-              </div>
-            </div>
-          )}
-        </Card>
-      </div>
-    );
-  }
+
 
   return (
     <div className={cn("flex flex-col", className)}>
-      <Card className="flex flex-col">
+      <Card className="flex flex-col relative">
+        {/* Loading overlay */}
+        {loading && (
+          <div className="absolute inset-0 z-[100] loading-overlay flex items-center justify-center">
+            <div className="bg-card/90 backdrop-blur-md rounded-lg px-6 py-4 shadow-lg border border-border">
+              <div className="flex items-center gap-3">
+                <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full"></div>
+                <span className="text-sm font-medium text-foreground">Loading data...</span>
+              </div>
+            </div>
+          </div>
+        )}
         <div
           ref={tableRef}
           className="overflow-x-auto flex-1"
