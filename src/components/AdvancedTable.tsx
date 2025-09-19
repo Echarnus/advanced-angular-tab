@@ -203,10 +203,11 @@ export function AdvancedTable<T extends Record<string, any>>({
       <th
         key={column.key}
         className={cn(
-          "px-4 py-3 text-left text-sm font-medium text-foreground bg-card/95 backdrop-blur-sm border-b border-border relative",
+          "px-4 py-3 text-left text-sm font-medium text-foreground table-header-blur border-b border-border relative",
           isLeftFrozen && "sticky z-50",
           isRightFrozen && "sticky right-0 z-40",
-          column.sortable && "cursor-pointer hover:bg-muted/50 transition-colors",
+          column.sortable && !loading && "cursor-pointer hover:bg-muted/50 transition-colors",
+          loading && "opacity-50 cursor-not-allowed",
           // Add visual distinction for frozen columns
           isLastLeftFrozen && "border-r-2 border-border shadow-lg shadow-black/5",
           isFirstRightFrozen && "border-l-2 border-border shadow-lg shadow-black/5"
@@ -219,7 +220,7 @@ export function AdvancedTable<T extends Record<string, any>>({
           ...(isLeftFrozen && { top: `${stickyTop}px` }),
           ...(isRightFrozen && { top: `${stickyTop}px` }),
         }}
-        onClick={() => handleSort(column)}
+        onClick={() => !loading && handleSort(column)}
       >
         <div className="flex items-center gap-2">
           <span className={cn(column.ellipsis && "truncate")}>{column.title}</span>
@@ -296,8 +297,8 @@ export function AdvancedTable<T extends Record<string, any>>({
         key={column.key}
         className={cn(
           "px-4 py-3 text-sm relative transition-colors",
-          isLeftFrozen && "sticky z-30 bg-card/95 backdrop-blur-sm frozen-cell",
-          isRightFrozen && "sticky right-0 z-20 bg-card/95 backdrop-blur-sm frozen-cell",
+          isLeftFrozen && "sticky z-30 table-cell-blur frozen-cell",
+          isRightFrozen && "sticky right-0 z-20 table-cell-blur frozen-cell",
           column.ellipsis && "max-w-0",
           column.multiline ? "whitespace-normal" : "whitespace-nowrap",
           // Add visual distinction for frozen columns
@@ -327,7 +328,7 @@ export function AdvancedTable<T extends Record<string, any>>({
     const isExpanded = expandedRows.has(key);
 
     return (
-      <td className="px-4 py-3 sticky left-0 z-30 bg-card/95 backdrop-blur-sm w-12 border-r-2 shadow-lg shadow-black/5 relative frozen-cell transition-colors">
+      <td className="px-4 py-3 sticky left-0 z-30 table-cell-blur w-12 border-r-2 shadow-lg shadow-black/5 relative frozen-cell transition-colors">
         {expandable?.expandRowByClick ? (
           // Just show an indicator when row click expands
           <div className="flex items-center justify-center h-6 w-6">
@@ -413,14 +414,122 @@ export function AdvancedTable<T extends Record<string, any>>({
 
   if (loading) {
     return (
-      <Card className={cn("overflow-hidden", className)}>
-        <div className="p-4">
-          <Skeleton className="h-8 w-full mb-4" />
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-12 w-full mb-2" />
-          ))}
-        </div>
-      </Card>
+      <div className={cn("flex flex-col", className)}>
+        <Card className="flex flex-col">
+          <div
+            ref={tableRef}
+            className="overflow-x-auto flex-1"
+          >
+            <table className={cn(
+              "w-full border-collapse",
+              flexibleColumns > 0 ? "table-auto" : "table-fixed"
+            )} style={{ minWidth: scroll?.x }}>
+              {/* First thead for layout spacing - invisible */}
+              <thead className="invisible">
+                <tr>
+                  {expandable && (
+                    <th className="w-12 px-4 py-3" />
+                  )}
+                  {leftFrozenColumns.map(column => (
+                    <th
+                      key={`layout-${column.key}`}
+                      style={{
+                        width: column.width || (flexibleColumns > 0 ? 'auto' : undefined),
+                        minWidth: column.minWidth,
+                        maxWidth: column.maxWidth
+                      }}
+                      className="px-4 py-3"
+                    >
+                      {column.title}
+                    </th>
+                  ))}
+                  {scrollableColumns.map(column => (
+                    <th
+                      key={`layout-${column.key}`}
+                      style={{
+                        width: column.width || (flexibleColumns > 0 ? 'auto' : undefined),
+                        minWidth: column.minWidth,
+                        maxWidth: column.maxWidth
+                      }}
+                      className="px-4 py-3"
+                    >
+                      {column.title}
+                    </th>
+                  ))}
+                  {rightFrozenColumns.map(column => (
+                    <th
+                      key={`layout-${column.key}`}
+                      style={{
+                        width: column.width || (flexibleColumns > 0 ? 'auto' : undefined),
+                        minWidth: column.minWidth,
+                        maxWidth: column.maxWidth
+                      }}
+                      className="px-4 py-3"
+                    >
+                      {column.title}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              
+              {/* Second thead for visible sticky header - disabled state */}
+              <thead 
+                ref={headerRef}
+                className="sticky z-40 table-header-blur border-b border-border opacity-50"
+                style={{ top: `${stickyTop}px` }}
+              >
+                <tr>
+                  {expandable && (
+                    <th 
+                      className="w-12 px-4 py-3 sticky left-0 z-50 table-header-blur border-b border-border border-r-2 shadow-lg shadow-black/5 relative"
+                      style={{ top: `${stickyTop}px` }}
+                    >
+                      <span className="sr-only">Expand</span>
+                    </th>
+                  )}
+                  {leftFrozenColumns.map(renderColumnHeader)}
+                  {scrollableColumns.map(renderColumnHeader)}
+                  {rightFrozenColumns.map(renderColumnHeader)}
+                </tr>
+              </thead>
+              
+              <tbody>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className="table-row">
+                    {expandable && (
+                      <td className="px-4 py-3 sticky left-0 z-30 table-cell-blur w-12 border-r-2 shadow-lg shadow-black/5">
+                        <Skeleton className="h-4 w-4 mx-auto" />
+                      </td>
+                    )}
+                    {columns.map((column) => (
+                      <td
+                        key={column.key}
+                        className={cn(
+                          "px-4 py-3",
+                          (column.frozen === true || column.frozen === 'left') && "sticky z-30 table-cell-blur",
+                          column.frozen === 'right' && "sticky right-0 z-20 table-cell-blur"
+                        )}
+                      >
+                        <Skeleton className="h-4 w-full" />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {pagination?.showPagination && (
+            <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-card opacity-50">
+              <Skeleton className="h-4 w-32" />
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-8 w-16" />
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-8 w-16" />
+              </div>
+            </div>
+          )}
+        </Card>
+      </div>
     );
   }
 
@@ -486,13 +595,13 @@ export function AdvancedTable<T extends Record<string, any>>({
             {/* Second thead for visible sticky header */}
             <thead 
               ref={headerRef}
-              className="sticky z-40 bg-card/95 backdrop-blur-sm border-b border-border"
+              className="sticky z-40 table-header-blur border-b border-border"
               style={{ top: `${stickyTop}px` }}
             >
               <tr>
                 {expandable && (
                   <th 
-                    className="w-12 px-4 py-3 sticky left-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border border-r-2 shadow-lg shadow-black/5 relative"
+                    className="w-12 px-4 py-3 sticky left-0 z-50 table-header-blur border-b border-border border-r-2 shadow-lg shadow-black/5 relative"
                     style={{ top: `${stickyTop}px` }}
                   >
                     <span className="sr-only">Expand</span>
