@@ -23,8 +23,38 @@ export function AdvancedTable<T extends Record<string, any>>({
 }: TableProps<T>) {
   const [sortState, setSortState] = useState<SortState>({ field: null, direction: null });
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [stickyTop, setStickyTop] = useState(0);
   const tableRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLTableSectionElement>(null);
+
+  // Calculate sticky position based on scroll
+  useEffect(() => {
+    const updateStickyPosition = () => {
+      if (!tableRef.current) return;
+      
+      const rect = tableRef.current.getBoundingClientRect();
+      const newStickyTop = Math.max(0, -rect.top);
+      setStickyTop(newStickyTop);
+    };
+
+    const handleScroll = () => {
+      updateStickyPosition();
+    };
+
+    // Listen to both window scroll and any parent scroll containers
+    document.addEventListener('scroll', handleScroll, true);
+    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('resize', updateStickyPosition);
+
+    // Initial calculation
+    updateStickyPosition();
+
+    return () => {
+      document.removeEventListener('scroll', handleScroll, true);
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', updateStickyPosition);
+    };
+  }, []);
 
   const leftFrozenColumns = columns.filter(col => col.frozen === true || col.frozen === 'left');
   const rightFrozenColumns = columns.filter(col => col.frozen === 'right');
@@ -97,6 +127,8 @@ export function AdvancedTable<T extends Record<string, any>>({
           minWidth: column.minWidth,
           maxWidth: column.maxWidth,
           ...(isLeftFrozen && { left: leftOffset }),
+          ...(isLeftFrozen && { top: `${stickyTop}px` }),
+          ...(isRightFrozen && { top: `${stickyTop}px` }),
         }}
         onClick={() => handleSort(column)}
       >
@@ -334,10 +366,17 @@ export function AdvancedTable<T extends Record<string, any>>({
             </thead>
             
             {/* Second thead for visible sticky header */}
-            <thead className="sticky top-0 z-40 bg-card/95 backdrop-blur-sm border-b border-border">
+            <thead 
+              ref={headerRef}
+              className="sticky z-40 bg-card/95 backdrop-blur-sm border-b border-border"
+              style={{ top: `${stickyTop}px` }}
+            >
               <tr>
                 {expandable && (
-                  <th className="w-12 px-4 py-3 sticky left-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border" />
+                  <th 
+                    className="w-12 px-4 py-3 sticky left-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border"
+                    style={{ top: `${stickyTop}px` }}
+                  />
                 )}
                 {leftFrozenColumns.map(renderColumnHeader)}
                 {scrollableColumns.map(renderColumnHeader)}
