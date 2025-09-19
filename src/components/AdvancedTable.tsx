@@ -212,7 +212,7 @@ export function AdvancedTable<T extends Record<string, any>>({
     const isExpanded = expandedRows.has(key);
 
     return (
-      <td className="px-4 py-3 border-b border-border sticky left-0 z-40 bg-card/95 backdrop-blur-sm w-12">
+      <td className="px-4 py-3 border-b border-border sticky left-0 z-30 bg-card backdrop-blur-sm w-12">
         {expandable?.expandRowByClick ? (
           // Just show an indicator when row click expands
           <div className="flex items-center justify-center h-6 w-6">
@@ -374,7 +374,7 @@ export function AdvancedTable<T extends Record<string, any>>({
               <tr>
                 {expandable && (
                   <th 
-                    className="w-12 px-4 py-3 sticky left-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border"
+                    className="w-12 px-4 py-3 sticky left-0 z-50 bg-card backdrop-blur-sm border-b border-border"
                     style={{ top: `${stickyTop}px` }}
                   >
                     <span className="sr-only">Expand</span>
