@@ -278,14 +278,10 @@ export function AdvancedTable<T extends Record<string, any>>({
   }
 
   return (
-    <Card className={cn("overflow-hidden flex flex-col h-full", className)}>
-      {/* Single scrollable container with sticky header */}
+    <Card className={cn("overflow-hidden flex flex-col", className)}>
       <div
         ref={tableRef}
-        className="overflow-auto flex-1"
-        style={{ 
-          maxHeight: scroll?.y || undefined
-        }}
+        className="overflow-x-auto"
       >
         <table className="w-full table-fixed border-collapse" style={{ minWidth: scroll?.x }}>
           <thead className="sticky top-0 z-20">

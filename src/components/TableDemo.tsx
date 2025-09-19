@@ -216,8 +216,8 @@ export function TableDemo() {
   );
 
   return (
-    <div className="h-full flex flex-col space-y-6 overflow-hidden">
-      <div className="flex items-center justify-between flex-shrink-0">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div className="space-y-2">
           <h1 className="text-2xl font-semibold">Advanced Data Table</h1>
           <p className="text-muted-foreground">
@@ -227,7 +227,7 @@ export function TableDemo() {
         <ThemeSwitcher />
       </div>
 
-      <div className="flex-1 min-h-0">
+      <div>
         <AdvancedTable
           data={data}
           columns={columns}
@@ -250,18 +250,17 @@ export function TableDemo() {
           }}
           scroll={{
             x: 1400,
-            y: undefined, // Let table fill available height
           }}
           onPageChange={handlePageChange}
           onSort={handleSort}
           onExpand={(expanded, record) => {
             console.log('Row expanded:', expanded, record);
           }}
-          className="shadow-sm h-full"
+          className="shadow-sm"
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 flex-shrink-0">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="p-4">
           <h3 className="font-semibold mb-2">Features Demonstrated</h3>
           <ul className="text-sm space-y-1 text-muted-foreground">
