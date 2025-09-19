@@ -32,3 +32,8 @@ pids
 .devcontainer/
 
 .spark-workbench-id
+
+# Build artifacts
+dist/
+dist-combined/
+angular/dist/
