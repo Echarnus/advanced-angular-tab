@@ -1,0 +1,168 @@
+<div #tableContainer class="w-full" [ngClass]="className">
+  <!-- Loading skeleton -->
+  <div *ngIf="loading" class="space-y-2">
+    <div class="h-12 bg-gray-200 rounded animate-pulse"></div>
+    <div *ngFor="let item of [1,2,3,4,5,6,7,8,9,10]" class="h-16 bg-gray-100 rounded animate-pulse"></div>
+  </div>
+
+  <!-- Actual table -->
+  <div *ngIf="!loading" class="relative w-full overflow-x-auto">
+    <table class="w-full caption-bottom text-sm">
+      <!-- Table Header -->
+      <thead 
+        #tableHeader
+        class="[&_tr]:border-b"
+        [style.position]="sticky ? 'sticky' : 'static'"
+        [style.top]="sticky ? stickyTop + 'px' : 'auto'"
+        [style.z-index]="sticky ? '10' : 'auto'">
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <!-- Expand column -->
+          <th *ngIf="expandable" 
+              class="h-10 px-2 text-left align-middle font-medium whitespace-nowrap">
+            <div class="text-foreground">Expand</div>
+          </th>
+
+          <!-- Data columns -->
+          <th *ngFor="let column of columns" 
+              [ngStyle]="getColumnStyle(column)"
+              [ngClass]="{
+                'cursor-pointer': column.sortable,
+                'text-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap': true
+              }"
+              (click)="handleSort(column)">
+            <div class="flex items-center space-x-1">
+              <div class="text-foreground">{{ column.title }}</div>
+              <div *ngIf="column.sortable" class="flex flex-col">
+                <svg 
+                  class="w-3 h-3"
+                  [ngClass]="{
+                    'text-gray-400': sortState.field !== column.key || sortState.direction !== 'asc',
+                    'text-blue-600': sortState.field === column.key && sortState.direction === 'asc'
+                  }"
+                  fill="currentColor" 
+                  viewBox="0 0 20 20">
+                  <path d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"/>
+                </svg>
+                <svg 
+                  class="w-3 h-3 -mt-1"
+                  [ngClass]="{
+                    'text-gray-400': sortState.field !== column.key || sortState.direction !== 'desc',
+                    'text-blue-600': sortState.field === column.key && sortState.direction === 'desc'
+                  }"
+                  fill="currentColor" 
+                  viewBox="0 0 20 20">
+                  <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/>
+                </svg>
+              </div>
+            </div>
+          </th>
+        </tr>
+      </thead>
+
+      <!-- Table Body -->
+      <tbody class="[&_tr:last-child]:border-0">
+        <ng-container *ngFor="let record of data; let i = index; trackBy: trackByRowKey">
+          <!-- Main row -->
+          <tr class="border-b transition-colors hover:bg-muted/50">
+            <!-- Expand button cell -->
+            <td *ngIf="expandable" class="px-2 py-3">
+              <button 
+                class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                [ngClass]="{
+                  'bg-accent text-accent-foreground': isRowExpanded(record, i)
+                }"
+                (click)="toggleRowExpansion(record, i)">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path *ngIf="!isRowExpanded(record, i)" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                  <path *ngIf="isRowExpanded(record, i)" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 12H6"/>
+                </svg>
+              </button>
+            </td>
+
+            <!-- Data cells -->
+            <td *ngFor="let column of columns" 
+                [ngStyle]="getColumnStyle(column)"
+                class="px-2 py-3">
+              <ng-container *ngIf="column.cellTemplate; else defaultCell">
+                <ng-container 
+                  *ngTemplateOutlet="column.cellTemplate; context: { 
+                    $implicit: getCellValue(record, column, i), 
+                    record: record, 
+                    index: i 
+                  }">
+                </ng-container>
+              </ng-container>
+              <ng-template #defaultCell>
+                {{ getCellValue(record, column, i) }}
+              </ng-template>
+            </td>
+          </tr>
+
+          <!-- Expanded row -->
+          <tr *ngIf="isRowExpanded(record, i)" class="border-b">
+            <td [attr.colspan]="columns.length + (expandable ? 1 : 0)" class="px-2 py-4">
+              <ng-container *ngIf="expandable?.expandedRowTemplate; else defaultExpanded">
+                <ng-container 
+                  *ngTemplateOutlet="expandable.expandedRowTemplate; context: { 
+                    $implicit: record, 
+                    index: i 
+                  }">
+                </ng-container>
+              </ng-container>
+              <ng-template #defaultExpanded>
+                <div class="p-4 bg-gray-50 rounded">
+                  <pre>{{ record | json }}</pre>
+                </div>
+              </ng-template>
+            </td>
+          </tr>
+        </ng-container>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div *ngIf="pagination && pagination.showPagination !== false" 
+       class="flex items-center justify-between px-2 py-4">
+    <div class="flex items-center space-x-6 lg:space-x-8">
+      <div class="text-sm text-muted-foreground">
+        Showing {{ (pagination.current - 1) * pagination.pageSize + 1 }} to 
+        {{ Math.min(pagination.current * pagination.pageSize, pagination.total) }} of 
+        {{ pagination.total }} results
+      </div>
+      <div *ngIf="pagination.showSizeChanger" class="flex items-center space-x-2">
+        <div class="text-sm font-medium">Show</div>
+        <select 
+          class="border border-input bg-background px-3 py-1 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          [value]="pagination.pageSize"
+          (change)="onPageSizeChange($event)">
+          <option *ngFor="let size of pagination.pageSizeOptions || [10, 20, 50, 100]" 
+                  [value]="size">{{ size }}</option>
+        </select>
+      </div>
+    </div>
+    <div class="flex items-center space-x-2">
+      <button 
+        class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+        [disabled]="pagination.current <= 1"
+        (click)="handlePageChange(pagination.current - 1, pagination.pageSize)">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      
+      <div class="text-sm font-medium">
+        Page {{ pagination.current }} of {{ Math.ceil(pagination.total / pagination.pageSize) }}
+      </div>
+      
+      <button 
+        class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+        [disabled]="pagination.current >= Math.ceil(pagination.total / pagination.pageSize)"
+        (click)="handlePageChange(pagination.current + 1, pagination.pageSize)">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
