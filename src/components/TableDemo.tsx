@@ -136,7 +136,7 @@ export function TableDemo() {
     {
       key: 'role',
       title: 'Role',
-      width: 120, // Fixed width for badges
+      minWidth: 300, // Fixed width for badges
       sortable: true,
       render: (value) => (
         <Badge variant="secondary">{value}</Badge>
@@ -174,8 +174,15 @@ export function TableDemo() {
       title: 'Last Login',
       minWidth: 100,
       maxWidth: 140,
-      sortable: true,
-      frozen: 'right',
+      sortable: true
+    },
+    {
+      key: 'description',
+      title: 'Description',
+      minWidth: 200,
+      maxWidth: 450,
+      // No maxWidth specified - can grow as needed
+      ellipsis: true
     },
     {
       key: 'salary',
@@ -184,15 +191,7 @@ export function TableDemo() {
       maxWidth: 150,
       sortable: true,
       render: (value) => `$${value.toLocaleString()}`,
-    },
-    {
-      key: 'description',
-      title: 'Description',
-      minWidth: 200,
-      // No maxWidth specified - can grow as needed
-      ellipsis: true,
-      multiline: false,
-    },
+    }
   ];
 
   const handlePageChange = (page: number, pageSize: number) => {
