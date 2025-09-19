@@ -334,7 +334,7 @@ export function AdvancedTable<T extends Record<string, any>>({
             </thead>
             
             {/* Second thead for visible sticky header */}
-            <thead className="sticky top-0 z-40">
+            <thead className="sticky z-40" style={{ top: 0 }}>
               <tr>
                 {expandable && (
                   <th className="w-12 px-4 py-3 bg-card/95 backdrop-blur-sm border-b border-border sticky left-0 z-50" />
