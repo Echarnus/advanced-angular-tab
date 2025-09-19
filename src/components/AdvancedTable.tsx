@@ -56,6 +56,22 @@ export function AdvancedTable<T extends Record<string, any>>({
     };
   }, []);
 
+  // Recalculate sticky position when data changes (e.g., pagination)
+  useEffect(() => {
+    const updateStickyPosition = () => {
+      if (!tableRef.current) return;
+      
+      const rect = tableRef.current.getBoundingClientRect();
+      const newStickyTop = Math.max(0, -rect.top);
+      setStickyTop(newStickyTop);
+    };
+
+    // Use setTimeout to ensure DOM has updated after data change
+    const timer = setTimeout(updateStickyPosition, 0);
+    
+    return () => clearTimeout(timer);
+  }, [data, pagination?.current]);
+
   const leftFrozenColumns = columns.filter(col => col.frozen === true || col.frozen === 'left');
   const rightFrozenColumns = columns.filter(col => col.frozen === 'right');
   const scrollableColumns = columns.filter(col => !col.frozen);
