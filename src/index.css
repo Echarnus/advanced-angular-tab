@@ -99,3 +99,16 @@
 .table-row:hover .frozen-cell {
   background-color: hsl(var(--muted) / 0.5) !important;
 }
+
+/* Enhanced row distinction borders */
+.table-row {
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.table-row:not(:last-child) td {
+  border-bottom: 1px solid hsl(var(--border) / 0.6);
+}
+
+.table-row:hover {
+  border-bottom: 1px solid hsl(var(--border) / 0.8);
+}
