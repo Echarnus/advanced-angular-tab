@@ -376,7 +376,9 @@ export function AdvancedTable<T extends Record<string, any>>({
                   <th 
                     className="w-12 px-4 py-3 sticky left-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border"
                     style={{ top: `${stickyTop}px` }}
-                  />
+                  >
+                    <span className="sr-only">Expand</span>
+                  </th>
                 )}
                 {leftFrozenColumns.map(renderColumnHeader)}
                 {scrollableColumns.map(renderColumnHeader)}
