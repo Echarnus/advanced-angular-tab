@@ -134,7 +134,7 @@ import { TableColumn, User } from '../types/table.types';
       <!-- Table -->
       <div class="space-y-6">
         <app-advanced-table
-          [data]="allData"
+          [data]="displayData"
           [columns]="columns"
           [loading]="loading"
           [expandable]="{
@@ -231,9 +231,16 @@ export class TableDemoComponent implements OnInit {
   showConfig = false;
   loading = true;
   allData: User[] = [];
+  displayData: User[] = [];
   columns: TableColumn<User>[] = [];
   configText = '';
   sections = Array.from({ length: 20 }, (_, i) => i);
+  
+  // Sort state
+  sortState: { field: string | null; direction: 'asc' | 'desc' | null } = {
+    field: null,
+    direction: null
+  };
 
   private defaultColumns: TableColumn<User>[] = [
     {
@@ -328,10 +335,34 @@ export class TableDemoComponent implements OnInit {
     this.configText = JSON.stringify(this.defaultColumns, null, 2);
     this.allData = this.dataService.generateSampleData();
     
-    // Simulate loading
+    // Initialize data loading
+    this.loadData();
+  }
+
+  private loadData(): void {
+    this.loading = true;
+    
+    // Simulate loading delay
     setTimeout(() => {
+      let filteredData = [...this.allData];
+      
+      // Apply sorting
+      if (this.sortState.field && this.sortState.direction) {
+        filteredData.sort((a, b) => {
+          const aVal = a[this.sortState.field as keyof User];
+          const bVal = b[this.sortState.field as keyof User];
+          
+          let comparison = 0;
+          if (aVal < bVal) comparison = -1;
+          if (aVal > bVal) comparison = 1;
+          
+          return this.sortState.direction === 'desc' ? -comparison : comparison;
+        });
+      }
+      
+      this.displayData = filteredData;
       this.loading = false;
-    }, 2000);
+    }, 300);
   }
 
   getExpandedRowRender(record: User, index: number): string {
@@ -362,6 +393,11 @@ export class TableDemoComponent implements OnInit {
 
   onSort(event: {field: string, direction: 'asc' | 'desc' | null}): void {
     console.log('Sort changed:', event);
+    this.sortState = {
+      field: event.direction ? event.field : null,
+      direction: event.direction
+    };
+    this.loadData();
   }
 
   onExpand(event: {expanded: boolean, record: User}): void {
