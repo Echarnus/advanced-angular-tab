@@ -87,9 +87,9 @@ export function AdvancedTable<T extends Record<string, any>>({
       <th
         key={column.key}
         className={cn(
-          "px-4 py-3 text-left text-sm font-medium text-foreground bg-card/95 backdrop-blur-sm border-b border-border",
-          isLeftFrozen && "sticky z-30 bg-card/95",
-          isRightFrozen && "sticky right-0 z-20 bg-card/95",
+          "px-4 py-3 text-left text-sm font-medium text-foreground bg-card border-b border-border",
+          isLeftFrozen && "sticky z-50 bg-card",
+          isRightFrozen && "sticky right-0 z-40 bg-card",
           column.sortable && "cursor-pointer hover:bg-muted/50 transition-colors"
         )}
         style={{
@@ -152,8 +152,8 @@ export function AdvancedTable<T extends Record<string, any>>({
         key={column.key}
         className={cn(
           "px-4 py-3 text-sm border-b border-border",
-          isLeftFrozen && "sticky z-20 bg-card",
-          isRightFrozen && "sticky right-0 z-10 bg-card",
+          isLeftFrozen && "sticky z-30 bg-card",
+          isRightFrozen && "sticky right-0 z-20 bg-card",
           column.ellipsis && "max-w-0",
           column.multiline ? "whitespace-normal" : "whitespace-nowrap"
         )}
@@ -180,7 +180,7 @@ export function AdvancedTable<T extends Record<string, any>>({
     const isExpanded = expandedRows.has(key);
 
     return (
-      <td className="px-4 py-3 border-b border-border sticky left-0 z-30 bg-card w-12">
+      <td className="px-4 py-3 border-b border-border sticky left-0 z-40 bg-card w-12">
         {expandable?.expandRowByClick ? (
           // Just show an indicator when row click expands
           <div className="flex items-center justify-center h-6 w-6">
@@ -278,68 +278,120 @@ export function AdvancedTable<T extends Record<string, any>>({
   }
 
   return (
-    <Card className={cn("overflow-hidden flex flex-col", className)}>
-      <div
-        ref={tableRef}
-        className="overflow-x-auto"
-      >
-        <table className="w-full table-fixed border-collapse" style={{ minWidth: scroll?.x }}>
-          <thead className="sticky top-0 z-20">
-            <tr>
-              {expandable && (
-                <th className="w-12 px-4 py-3 bg-card/95 backdrop-blur-sm border-b border-border sticky left-0 z-30" />
-              )}
-              {leftFrozenColumns.map(renderColumnHeader)}
-              {scrollableColumns.map(renderColumnHeader)}
-              {rightFrozenColumns.map(renderColumnHeader)}
-            </tr>
-          </thead>
-          <tbody>
-            {data.length === 0 ? (
+    <div className={cn("flex flex-col", className)}>
+      <Card className="flex flex-col">
+        <div
+          ref={tableRef}
+          className="overflow-x-auto flex-1"
+        >
+          <table className="w-full table-fixed border-collapse" style={{ minWidth: scroll?.x }}>
+            {/* First thead for layout spacing - invisible */}
+            <thead className="invisible">
               <tr>
-                <td
-                  colSpan={columns.length + (expandable ? 1 : 0)}
-                  className="px-4 py-8 text-center text-muted-foreground"
-                >
-                  No data available
-                </td>
+                {expandable && (
+                  <th className="w-12 px-4 py-3" />
+                )}
+                {leftFrozenColumns.map(column => (
+                  <th
+                    key={`layout-${column.key}`}
+                    style={{
+                      width: column.width,
+                      minWidth: column.minWidth,
+                      maxWidth: column.maxWidth
+                    }}
+                    className="px-4 py-3"
+                  >
+                    {column.title}
+                  </th>
+                ))}
+                {scrollableColumns.map(column => (
+                  <th
+                    key={`layout-${column.key}`}
+                    style={{
+                      width: column.width,
+                      minWidth: column.minWidth,
+                      maxWidth: column.maxWidth
+                    }}
+                    className="px-4 py-3"
+                  >
+                    {column.title}
+                  </th>
+                ))}
+                {rightFrozenColumns.map(column => (
+                  <th
+                    key={`layout-${column.key}`}
+                    style={{
+                      width: column.width,
+                      minWidth: column.minWidth,
+                      maxWidth: column.maxWidth
+                    }}
+                    className="px-4 py-3"
+                  >
+                    {column.title}
+                  </th>
+                ))}
               </tr>
-            ) : (
-              data.map((record, index) => {
-                const key = getRowKey(record, index);
-                const isExpanded = expandedRows.has(key);
-                
-                return (
-                  <React.Fragment key={key}>
-                    <tr
-                      className={cn(
-                        "hover:bg-muted/50 transition-colors",
-                        expandable?.expandRowByClick && "cursor-pointer"
-                      )}
-                      onClick={() => expandable?.expandRowByClick && handleExpand(record)}
-                    >
-                      {expandable && renderExpandButton(record, index)}
-                      {leftFrozenColumns.map(column => renderCell(column, record, index))}
-                      {scrollableColumns.map(column => renderCell(column, record, index))}
-                      {rightFrozenColumns.map(column => renderCell(column, record, index))}
-                    </tr>
-                    {expandable && isExpanded && (
-                      <tr className="bg-muted/20">
-                        <td colSpan={columns.length + 1} className="p-0">
-                          <div className="sticky left-0 right-0 z-30 p-4 bg-muted/20 border-b border-border">
-                            {expandable.expandedRowRender(record, index)}
-                          </div>
-                        </td>
+            </thead>
+            
+            {/* Second thead for visible sticky header */}
+            <thead className="sticky top-0 z-40">
+              <tr>
+                {expandable && (
+                  <th className="w-12 px-4 py-3 bg-card/95 backdrop-blur-sm border-b border-border sticky left-0 z-50" />
+                )}
+                {leftFrozenColumns.map(renderColumnHeader)}
+                {scrollableColumns.map(renderColumnHeader)}
+                {rightFrozenColumns.map(renderColumnHeader)}
+              </tr>
+            </thead>
+            
+            <tbody>
+              {data.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={columns.length + (expandable ? 1 : 0)}
+                    className="px-4 py-8 text-center text-muted-foreground"
+                  >
+                    No data available
+                  </td>
+                </tr>
+              ) : (
+                data.map((record, index) => {
+                  const key = getRowKey(record, index);
+                  const isExpanded = expandedRows.has(key);
+                  
+                  return (
+                    <React.Fragment key={key}>
+                      <tr
+                        className={cn(
+                          "hover:bg-muted/50 transition-colors",
+                          expandable?.expandRowByClick && "cursor-pointer"
+                        )}
+                        onClick={() => expandable?.expandRowByClick && handleExpand(record)}
+                      >
+                        {expandable && renderExpandButton(record, index)}
+                        {leftFrozenColumns.map(column => renderCell(column, record, index))}
+                        {scrollableColumns.map(column => renderCell(column, record, index))}
+                        {rightFrozenColumns.map(column => renderCell(column, record, index))}
                       </tr>
-                    )}
-                  </React.Fragment>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
-      {renderPagination()}
-    </Card>
+                      {expandable && isExpanded && (
+                        <tr className="bg-muted/20">
+                          <td colSpan={columns.length + 1} className="p-0">
+                            <div className="sticky left-0 right-0 z-10 p-4 bg-muted/20 border-b border-border">
+                              {expandable.expandedRowRender(record, index)}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+        {renderPagination()}
+      </Card>
+    </div>
   );
 }
