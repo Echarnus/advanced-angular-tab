@@ -87,9 +87,9 @@ export function AdvancedTable<T extends Record<string, any>>({
       <th
         key={column.key}
         className={cn(
-          "px-4 py-3 text-left text-sm font-medium text-foreground bg-card border-b border-border",
-          isLeftFrozen && "sticky z-50 bg-card",
-          isRightFrozen && "sticky right-0 z-40 bg-card",
+          "px-4 py-3 text-left text-sm font-medium text-foreground bg-card/95 backdrop-blur-sm border-b border-border",
+          isLeftFrozen && "sticky z-50",
+          isRightFrozen && "sticky right-0 z-40",
           column.sortable && "cursor-pointer hover:bg-muted/50 transition-colors"
         )}
         style={{
@@ -152,8 +152,8 @@ export function AdvancedTable<T extends Record<string, any>>({
         key={column.key}
         className={cn(
           "px-4 py-3 text-sm border-b border-border",
-          isLeftFrozen && "sticky z-30 bg-card",
-          isRightFrozen && "sticky right-0 z-20 bg-card",
+          isLeftFrozen && "sticky z-30 bg-card/95 backdrop-blur-sm",
+          isRightFrozen && "sticky right-0 z-20 bg-card/95 backdrop-blur-sm",
           column.ellipsis && "max-w-0",
           column.multiline ? "whitespace-normal" : "whitespace-nowrap"
         )}
@@ -180,7 +180,7 @@ export function AdvancedTable<T extends Record<string, any>>({
     const isExpanded = expandedRows.has(key);
 
     return (
-      <td className="px-4 py-3 border-b border-border sticky left-0 z-40 bg-card w-12">
+      <td className="px-4 py-3 border-b border-border sticky left-0 z-40 bg-card/95 backdrop-blur-sm w-12">
         {expandable?.expandRowByClick ? (
           // Just show an indicator when row click expands
           <div className="flex items-center justify-center h-6 w-6">
@@ -334,10 +334,10 @@ export function AdvancedTable<T extends Record<string, any>>({
             </thead>
             
             {/* Second thead for visible sticky header */}
-            <thead className="sticky z-40" style={{ top: 0 }}>
+            <thead className="sticky top-0 z-40 bg-card/95 backdrop-blur-sm border-b border-border">
               <tr>
                 {expandable && (
-                  <th className="w-12 px-4 py-3 bg-card/95 backdrop-blur-sm border-b border-border sticky left-0 z-50" />
+                  <th className="w-12 px-4 py-3 sticky left-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border" />
                 )}
                 {leftFrozenColumns.map(renderColumnHeader)}
                 {scrollableColumns.map(renderColumnHeader)}
