@@ -186,8 +186,18 @@ export function AdvancedTable<T extends Record<string, any>>({
       }
     }
 
-    // Determine column width - if no width specified, use auto for flexible columns
-    const columnWidth = column.width || (flexibleColumns > 0 ? 'auto' : undefined);
+    // Determine column width - handle minWidth properly for flexible columns
+    let columnWidth: string | number | undefined;
+    if (column.width) {
+      columnWidth = column.width;
+    } else if (column.minWidth && !column.maxWidth) {
+      // For columns with only minWidth, use minWidth as base but allow growth
+      columnWidth = column.minWidth;
+    } else if (flexibleColumns > 0) {
+      columnWidth = 'auto';
+    } else {
+      columnWidth = undefined;
+    }
     
     return (
       <th
@@ -268,8 +278,18 @@ export function AdvancedTable<T extends Record<string, any>>({
       }
     }
 
-    // Determine column width - if no width specified, use auto for flexible columns
-    const columnWidth = column.width || (flexibleColumns > 0 ? 'auto' : undefined);
+    // Determine column width - handle minWidth properly for flexible columns
+    let columnWidth: string | number | undefined;
+    if (column.width) {
+      columnWidth = column.width;
+    } else if (column.minWidth && !column.maxWidth) {
+      // For columns with only minWidth, use minWidth as base but allow growth
+      columnWidth = column.minWidth;
+    } else if (flexibleColumns > 0) {
+      columnWidth = 'auto';
+    } else {
+      columnWidth = undefined;
+    }
     
     return (
       <td
