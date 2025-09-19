@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, OnDestroy, SimpleChanges, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonComponent } from './ui/button.component';
@@ -9,141 +9,279 @@ import { TableColumn, TableProps, SortState } from '../types/table.types';
   standalone: true,
   imports: [CommonModule, FormsModule, ButtonComponent],
   template: `
-    <div [class]="'relative w-full ' + (className || '')">
-      <!-- Loading overlay -->
-      <div *ngIf="loading" class="absolute inset-0 bg-background/50 flex items-center justify-center z-10">
-        <div class="text-muted-foreground">Loading data...</div>
-      </div>
+    <div [class]="'flex flex-col ' + (className || '')">
+      <div class="flex flex-col relative border rounded-lg bg-card">
+        <!-- Loading overlay -->
+        <div *ngIf="loading" class="absolute inset-0 z-[100] flex items-center justify-center bg-card/90 backdrop-blur-md">
+          <div class="bg-card/90 backdrop-blur-md rounded-lg px-6 py-4 shadow-lg border border-border">
+            <div class="flex items-center gap-3">
+              <div class="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full"></div>
+              <span class="text-sm font-medium text-foreground">Loading data...</span>
+            </div>
+          </div>
+        </div>
 
-      <!-- Table container with scroll -->
-      <div class="relative overflow-auto border rounded-lg" [style.max-height]="scroll?.y">
-        <table class="w-full caption-bottom text-sm">
-          <!-- Header -->
-          <thead [class]="sticky ? 'sticky top-0 z-20' : ''" class="bg-muted/50">
-            <tr class="border-b transition-colors hover:bg-muted/50">
-              <!-- Expand column -->
-              <th *ngIf="expandable" class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                <div class="flex items-center justify-center">
-                  <span class="text-xs">Expand</span>
-                </div>
-              </th>
+        <!-- Table container -->
+        <div #tableContainer class="overflow-x-auto flex-1" [style.max-height]="scroll?.y">
+          <table class="w-full border-collapse" [style.min-width]="scroll?.x">
+            
+            <!-- First thead for layout spacing - invisible -->
+            <thead class="invisible">
+              <tr>
+                <th *ngIf="expandable" class="w-12 px-4 py-3"></th>
+                <th *ngFor="let column of leftFrozenColumns; trackBy: trackByColumn"
+                    class="px-4 py-3"
+                    [style.width]="column.width"
+                    [style.min-width]="column.minWidth"
+                    [style.max-width]="column.maxWidth">
+                  {{ column.title }}
+                </th>
+                <th *ngFor="let column of scrollableColumns; trackBy: trackByColumn"
+                    class="px-4 py-3"
+                    [style.width]="column.width"
+                    [style.min-width]="column.minWidth"
+                    [style.max-width]="column.maxWidth">
+                  {{ column.title }}
+                </th>
+                <th *ngFor="let column of rightFrozenColumns; trackBy: trackByColumn"
+                    class="px-4 py-3"
+                    [style.width]="column.width"
+                    [style.min-width]="column.minWidth"
+                    [style.max-width]="column.maxWidth">
+                  {{ column.title }}
+                </th>
+              </tr>
+            </thead>
+
+            <!-- Second thead for visible sticky header -->
+            <thead #headerElement 
+                   class="sticky z-40 border-b border-border"
+                   [class.table-header-blur]="sticky"
+                   [style.top.px]="sticky ? stickyTop : 0">
+              <tr>
+                <!-- Expand column header -->
+                <th *ngIf="expandable" 
+                    class="w-12 px-4 py-3 sticky left-0 z-50 border-b border-border border-r-2 shadow-lg shadow-black/5 relative"
+                    [class.table-header-blur]="sticky"
+                    [style.top.px]="sticky ? stickyTop : 0">
+                  <span class="sr-only">Expand</span>
+                </th>
+                
+                <!-- Left frozen columns -->
+                <th *ngFor="let column of leftFrozenColumns; trackBy: trackByColumn"
+                    [class]="getHeaderClasses(column)"
+                    [style]="getColumnStyle(column)"
+                    (click)="!loading && column.sortable ? handleSort(column.key) : null">
+                  <div class="flex items-center gap-2">
+                    <span [class]="column.ellipsis ? 'truncate' : ''">{{ column.title }}</span>
+                    <div *ngIf="column.sortable" class="flex flex-col">
+                      <svg *ngIf="sortState.field === column.key && sortState.direction === 'asc'" 
+                           width="14" height="14" viewBox="0 0 256 256" class="text-primary">
+                        <path fill="currentColor" d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80a8,8,0,0,1,11.32-11.32L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z" transform="rotate(180 128 128)"/>
+                      </svg>
+                      <svg *ngIf="sortState.field === column.key && sortState.direction === 'desc'" 
+                           width="14" height="14" viewBox="0 0 256 256" class="text-primary">
+                        <path fill="currentColor" d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80a8,8,0,0,1,11.32-11.32L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/>
+                      </svg>
+                      <div *ngIf="!sortState.field || sortState.field !== column.key" class="flex flex-col">
+                        <svg width="12" height="12" viewBox="0 0 256 256" class="text-muted-foreground">
+                          <path fill="currentColor" d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80a8,8,0,0,1,11.32-11.32L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z" transform="rotate(180 128 128)"/>
+                        </svg>
+                        <svg width="12" height="12" viewBox="0 0 256 256" class="text-muted-foreground -mt-1">
+                          <path fill="currentColor" d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80a8,8,0,0,1,11.32-11.32L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/>
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </th>
+                
+                <!-- Scrollable columns -->
+                <th *ngFor="let column of scrollableColumns; trackBy: trackByColumn"
+                    [class]="getHeaderClasses(column)"
+                    [style]="getColumnStyle(column)"
+                    (click)="!loading && column.sortable ? handleSort(column.key) : null">
+                  <div class="flex items-center gap-2">
+                    <span [class]="column.ellipsis ? 'truncate' : ''">{{ column.title }}</span>
+                    <div *ngIf="column.sortable" class="flex flex-col">
+                      <svg *ngIf="sortState.field === column.key && sortState.direction === 'asc'" 
+                           width="14" height="14" viewBox="0 0 256 256" class="text-primary">
+                        <path fill="currentColor" d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80a8,8,0,0,1,11.32-11.32L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z" transform="rotate(180 128 128)"/>
+                      </svg>
+                      <svg *ngIf="sortState.field === column.key && sortState.direction === 'desc'" 
+                           width="14" height="14" viewBox="0 0 256 256" class="text-primary">
+                        <path fill="currentColor" d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80a8,8,0,0,1,11.32-11.32L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/>
+                      </svg>
+                      <div *ngIf="!sortState.field || sortState.field !== column.key" class="flex flex-col">
+                        <svg width="12" height="12" viewBox="0 0 256 256" class="text-muted-foreground">
+                          <path fill="currentColor" d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80a8,8,0,0,1,11.32-11.32L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z" transform="rotate(180 128 128)"/>
+                        </svg>
+                        <svg width="12" height="12" viewBox="0 0 256 256" class="text-muted-foreground -mt-1">
+                          <path fill="currentColor" d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80a8,8,0,0,1,11.32-11.32L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/>
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </th>
+                
+                <!-- Right frozen columns -->
+                <th *ngFor="let column of rightFrozenColumns; trackBy: trackByColumn"
+                    [class]="getHeaderClasses(column)"
+                    [style]="getColumnStyle(column)"
+                    (click)="!loading && column.sortable ? handleSort(column.key) : null">
+                  <div class="flex items-center gap-2">
+                    <span [class]="column.ellipsis ? 'truncate' : ''">{{ column.title }}</span>
+                    <div *ngIf="column.sortable" class="flex flex-col">
+                      <svg *ngIf="sortState.field === column.key && sortState.direction === 'asc'" 
+                           width="14" height="14" viewBox="0 0 256 256" class="text-primary">
+                        <path fill="currentColor" d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80a8,8,0,0,1,11.32-11.32L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z" transform="rotate(180 128 128)"/>
+                      </svg>
+                      <svg *ngIf="sortState.field === column.key && sortState.direction === 'desc'" 
+                           width="14" height="14" viewBox="0 0 256 256" class="text-primary">
+                        <path fill="currentColor" d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80a8,8,0,0,1,11.32-11.32L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/>
+                      </svg>
+                      <div *ngIf="!sortState.field || sortState.field !== column.key" class="flex flex-col">
+                        <svg width="12" height="12" viewBox="0 0 256 256" class="text-muted-foreground">
+                          <path fill="currentColor" d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80a8,8,0,0,1,11.32-11.32L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z" transform="rotate(180 128 128)"/>
+                        </svg>
+                        <svg width="12" height="12" viewBox="0 0 256 256" class="text-muted-foreground -mt-1">
+                          <path fill="currentColor" d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80a8,8,0,0,1,11.32-11.32L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/>
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </th>
+              </tr>
+            </thead>
+
+            <!-- Table body -->
+            <tbody>
+              <!-- No data row -->
+              <tr *ngIf="paginatedData.length === 0">
+                <td [attr.colspan]="columns.length + (expandable ? 1 : 0)" 
+                    class="px-4 py-8 text-center text-muted-foreground">
+                  No data available
+                </td>
+              </tr>
               
-              <!-- Data columns -->
-              <th *ngFor="let column of columns; trackBy: trackByColumn"
-                  [class]="getHeaderClasses(column)"
-                  [style.width]="column.width"
-                  [style.min-width]="column.minWidth" 
-                  [style.max-width]="column.maxWidth">
-                <div [class]="column.sortable ? 'flex items-center justify-between cursor-pointer' : 'flex items-center'"
-                     (click)="column.sortable ? handleSort(column.key) : null">
-                  <div class="flex items-center">
-                    <span>{{ column.title }}</span>
-                  </div>
-                  <div *ngIf="column.sortable" class="flex flex-col ml-2">
-                    <!-- Sort up arrow -->
-                    <svg width="12" height="12" viewBox="0 0 256 256" 
-                         [class]="sortState.field === column.key && sortState.direction === 'asc' ? 'text-foreground' : 'text-muted-foreground'">
-                      <path fill="currentColor" d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80a8,8,0,0,1,11.32-11.32L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z" transform="rotate(180 128 128)"/>
-                    </svg>
-                    <!-- Sort down arrow -->
-                    <svg width="12" height="12" viewBox="0 0 256 256"
-                         [class]="sortState.field === column.key && sortState.direction === 'desc' ? 'text-foreground' : 'text-muted-foreground'">
-                      <path fill="currentColor" d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80a8,8,0,0,1,11.32-11.32L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/>
-                    </svg>
-                  </div>
-                </div>
-              </th>
-            </tr>
-          </thead>
-
-          <!-- Body -->
-          <tbody class="[&_tr:last-child]:border-0">
-            <ng-container *ngIf="!loading && paginatedData.length > 0">
+              <!-- Data rows -->
               <ng-container *ngFor="let row of paginatedData; let i = index; trackBy: trackByRow">
                 <!-- Main row -->
-                <tr class="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                <tr class="table-row hover:bg-muted/50 transition-colors"
+                    [class.cursor-pointer]="expandable?.expandRowByClick"
+                    (click)="expandable?.expandRowByClick ? toggleExpanded(row) : null">
+                  
                   <!-- Expand button -->
-                  <td *ngIf="expandable" class="p-4 align-middle">
-                    <app-button size="sm" variant="ghost" (click)="toggleExpanded(row)">
-                      <svg *ngIf="!isExpanded(row)" width="16" height="16" viewBox="0 0 256 256">
+                  <td *ngIf="expandable" 
+                      class="px-4 py-3 sticky left-0 z-30 w-12 border-r-2 shadow-lg shadow-black/5 relative transition-colors"
+                      [class.table-cell-blur]="sticky">
+                    <app-button *ngIf="!expandable?.expandRowByClick"
+                                variant="ghost" 
+                                size="sm" 
+                                class="h-6 w-6 p-0"
+                                (click)="toggleExpanded(row)">
+                      <svg *ngIf="!isExpanded(row)" width="14" height="14" viewBox="0 0 256 256">
                         <path fill="currentColor" d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"/>
                       </svg>
-                      <svg *ngIf="isExpanded(row)" width="16" height="16" viewBox="0 0 256 256">
+                      <svg *ngIf="isExpanded(row)" width="14" height="14" viewBox="0 0 256 256">
                         <path fill="currentColor" d="M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128Z"/>
                       </svg>
                     </app-button>
+                    <div *ngIf="expandable?.expandRowByClick" class="flex items-center justify-center h-6 w-6">
+                      <svg *ngIf="!isExpanded(row)" width="14" height="14" viewBox="0 0 256 256" class="text-muted-foreground">
+                        <path fill="currentColor" d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"/>
+                      </svg>
+                      <svg *ngIf="isExpanded(row)" width="14" height="14" viewBox="0 0 256 256" class="text-muted-foreground">
+                        <path fill="currentColor" d="M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128Z"/>
+                      </svg>
+                    </div>
                   </td>
                   
-                  <!-- Data cells -->
-                  <td *ngFor="let column of columns; trackBy: trackByColumn"
+                  <!-- Left frozen columns -->
+                  <td *ngFor="let column of leftFrozenColumns; trackBy: trackByColumn"
                       [class]="getCellClasses(column)"
-                      [style.width]="column.width"
-                      [style.min-width]="column.minWidth"
-                      [style.max-width]="column.maxWidth">
+                      [style]="getCellStyle(column)">
                     <div [class]="getCellContentClasses(column)"
+                         [title]="column.ellipsis ? getCellContent(row, column, i) : null"
+                         [innerHTML]="getCellContent(row, column, i)">
+                    </div>
+                  </td>
+                  
+                  <!-- Scrollable columns -->
+                  <td *ngFor="let column of scrollableColumns; trackBy: trackByColumn"
+                      [class]="getCellClasses(column)"
+                      [style]="getCellStyle(column)">
+                    <div [class]="getCellContentClasses(column)"
+                         [title]="column.ellipsis ? getCellContent(row, column, i) : null"
+                         [innerHTML]="getCellContent(row, column, i)">
+                    </div>
+                  </td>
+                  
+                  <!-- Right frozen columns -->
+                  <td *ngFor="let column of rightFrozenColumns; trackBy: trackByColumn"
+                      [class]="getCellClasses(column)"
+                      [style]="getCellStyle(column)">
+                    <div [class]="getCellContentClasses(column)"
+                         [title]="column.ellipsis ? getCellContent(row, column, i) : null"
                          [innerHTML]="getCellContent(row, column, i)">
                     </div>
                   </td>
                 </tr>
 
                 <!-- Expanded row -->
-                <tr *ngIf="expandable && isExpanded(row)" class="border-b">
-                  <td [attr.colspan]="columns.length + (expandable ? 1 : 0)" class="p-4">
-                    <div [innerHTML]="getExpandedContent(row, i)"></div>
+                <tr *ngIf="expandable && isExpanded(row)" class="bg-muted/20">
+                  <td [attr.colspan]="columns.length + 1" class="p-0">
+                    <div class="sticky left-0 right-0 z-10 p-4 bg-muted/20 border-b border-border">
+                      <div [innerHTML]="getExpandedContent(row, i)"></div>
+                    </div>
                   </td>
                 </tr>
               </ng-container>
-            </ng-container>
-
-            <!-- No data row -->
-            <tr *ngIf="!loading && paginatedData.length === 0">
-              <td [attr.colspan]="columns.length + (expandable ? 1 : 0)" class="h-24 text-center text-muted-foreground">
-                No data available
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Pagination -->
-      <div *ngIf="pagination?.showPagination !== false" class="flex items-center justify-between px-4 py-3 border-t border-border bg-card">
-        <div class="flex items-center gap-4">
-          <span class="text-sm text-muted-foreground">
-            Showing {{ startItem }} to {{ endItem }} of {{ pagination?.total || 0 }} results
-          </span>
-          <div *ngIf="pagination?.showSizeChanger" class="flex items-center gap-2">
-            <span class="text-sm text-muted-foreground">Show</span>
-            <select [(ngModel)]="currentPageSize" (change)="onPageSizeChange()" 
-                    class="w-20 h-8 rounded-md border border-input bg-background px-3 py-1 text-sm">
-              <option *ngFor="let size of pagination?.pageSizeOptions || [10, 20, 50]" [value]="size">
-                {{ size }}
-              </option>
-            </select>
-          </div>
+            </tbody>
+          </table>
         </div>
-        
-        <div class="flex items-center gap-2">
-          <app-button variant="outline" size="sm" [disabled]="currentPage <= 1" (click)="onPreviousPage()">
-            <svg width="16" height="16" viewBox="0 0 256 256">
-              <path fill="currentColor" d="m165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"/>
-            </svg>
-          </app-button>
+
+        <!-- Pagination -->
+        <div *ngIf="pagination?.showPagination !== false" 
+             class="flex items-center justify-between px-4 py-3 border-t border-border bg-card">
+          <div class="flex items-center gap-4">
+            <span class="text-sm text-muted-foreground">
+              Showing {{ startItem }} to {{ endItem }} of {{ pagination?.total || 0 }} results
+            </span>
+            <div *ngIf="pagination?.showSizeChanger" class="flex items-center gap-2">
+              <span class="text-sm text-muted-foreground">Show</span>
+              <select [(ngModel)]="currentPageSize" 
+                      (change)="onPageSizeChange()" 
+                      class="w-20 h-8 rounded-md border border-input bg-background px-3 py-1 text-sm">
+                <option *ngFor="let size of pagination?.pageSizeOptions || [10, 20, 50]" [value]="size">
+                  {{ size }}
+                </option>
+              </select>
+            </div>
+          </div>
           
-          <span class="text-sm text-muted-foreground">
-            Page {{ currentPage }} of {{ totalPages }}
-          </span>
-          
-          <app-button variant="outline" size="sm" [disabled]="currentPage >= totalPages" (click)="onNextPage()">
-            <svg width="16" height="16" viewBox="0 0 256 256">
-              <path fill="currentColor" d="m221.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L204.69,128,130.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,221.66,133.66Z"/>
-            </svg>
-          </app-button>
+          <div class="flex items-center gap-2">
+            <app-button variant="outline" size="sm" [disabled]="currentPage <= 1" (click)="onPreviousPage()">
+              <svg width="16" height="16" viewBox="0 0 256 256">
+                <path fill="currentColor" d="m165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"/>
+              </svg>
+            </app-button>
+            
+            <span class="text-sm text-muted-foreground">
+              Page {{ currentPage }} of {{ totalPages }}
+            </span>
+            
+            <app-button variant="outline" size="sm" [disabled]="currentPage >= totalPages" (click)="onNextPage()">
+              <svg width="16" height="16" viewBox="0 0 256 256">
+                <path fill="currentColor" d="m221.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L204.69,128,130.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,221.66,133.66Z"/>
+              </svg>
+            </app-button>
+          </div>
         </div>
       </div>
     </div>
   `
 })
-export class AdvancedTableComponent<T = any> implements OnInit, OnChanges {
+export class AdvancedTableComponent<T = any> implements OnInit, OnChanges, OnDestroy, AfterViewInit {
   @Input() data: T[] = [];
   @Input() columns: TableColumn<T>[] = [];
   @Input() loading = false;
@@ -158,10 +296,17 @@ export class AdvancedTableComponent<T = any> implements OnInit, OnChanges {
   @Output() sort = new EventEmitter<{field: string, direction: 'asc' | 'desc' | null}>();
   @Output() expand = new EventEmitter<{expanded: boolean, record: T}>();
 
+  @ViewChild('tableContainer', { static: false }) tableContainer!: ElementRef<HTMLDivElement>;
+  @ViewChild('headerElement', { static: false }) headerElement!: ElementRef<HTMLTableSectionElement>;
+
   sortState: SortState = { field: null, direction: null };
   expandedRows = new Set<string>();
   currentPage = 1;
   currentPageSize = 10;
+  stickyTop = 0;
+
+  private scrollListener?: () => void;
+  private resizeListener?: () => void;
 
   ngOnInit(): void {
     if (this.pagination) {
@@ -170,11 +315,58 @@ export class AdvancedTableComponent<T = any> implements OnInit, OnChanges {
     }
   }
 
+  ngAfterViewInit(): void {
+    this.setupStickyPositioning();
+  }
+
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['pagination'] && this.pagination) {
       this.currentPage = this.pagination.current;
       this.currentPageSize = this.pagination.pageSize;
     }
+    
+    // Recalculate sticky position when data changes
+    if (changes['data'] || changes['pagination']) {
+      setTimeout(() => this.updateStickyPosition(), 0);
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.removeStickyPositioning();
+  }
+
+  private setupStickyPositioning(): void {
+    if (!this.sticky) return;
+
+    this.scrollListener = () => this.updateStickyPosition();
+    this.resizeListener = () => this.updateStickyPosition();
+
+    // Listen to both window scroll and document scroll with capture
+    document.addEventListener('scroll', this.scrollListener, true);
+    window.addEventListener('scroll', this.scrollListener);
+    window.addEventListener('resize', this.resizeListener);
+
+    // Initial calculation
+    this.updateStickyPosition();
+  }
+
+  private removeStickyPositioning(): void {
+    if (this.scrollListener) {
+      document.removeEventListener('scroll', this.scrollListener, true);
+      window.removeEventListener('scroll', this.scrollListener);
+    }
+    if (this.resizeListener) {
+      window.removeEventListener('resize', this.resizeListener);
+    }
+  }
+
+  private updateStickyPosition(): void {
+    if (!this.tableContainer?.nativeElement || !this.sticky) return;
+
+    const rect = this.tableContainer.nativeElement.getBoundingClientRect();
+    const offsetHeader = this.sticky.offsetHeader || 0;
+    const newStickyTop = Math.max(0, -rect.top + offsetHeader);
+    this.stickyTop = newStickyTop;
   }
 
   get paginatedData(): T[] {
@@ -184,6 +376,18 @@ export class AdvancedTableComponent<T = any> implements OnInit, OnChanges {
     const start = (this.currentPage - 1) * this.currentPageSize;
     const end = start + this.currentPageSize;
     return this.data.slice(start, end);
+  }
+
+  get leftFrozenColumns(): TableColumn<T>[] {
+    return this.columns.filter(col => col.frozen === true || col.frozen === 'left');
+  }
+
+  get rightFrozenColumns(): TableColumn<T>[] {
+    return this.columns.filter(col => col.frozen === 'right');
+  }
+
+  get scrollableColumns(): TableColumn<T>[] {
+    return this.columns.filter(col => !col.frozen);
   }
 
   get totalPages(): number {
@@ -211,21 +415,108 @@ export class AdvancedTableComponent<T = any> implements OnInit, OnChanges {
   }
 
   getHeaderClasses(column: TableColumn<T>): string {
-    const baseClasses = 'h-12 px-4 text-left align-middle font-medium text-muted-foreground';
-    const frozenClasses = column.frozen ? 'sticky bg-muted/50 z-10' : '';
-    const leftClasses = column.frozen === true || column.frozen === 'left' ? 'left-0' : '';
-    const rightClasses = column.frozen === 'right' ? 'right-0' : '';
+    const baseClasses = 'h-12 px-4 text-left align-middle font-medium text-muted-foreground relative transition-colors';
+    const frozenClasses = this.getFrozenClasses(column);
+    const sortableClasses = column.sortable && !this.loading ? 'cursor-pointer hover:bg-muted/50' : '';
+    const loadingClasses = this.loading ? 'opacity-50 cursor-not-allowed' : '';
     
-    return `${baseClasses} ${frozenClasses} ${leftClasses} ${rightClasses}`.trim();
+    return `${baseClasses} ${frozenClasses} ${sortableClasses} ${loadingClasses}`.trim();
   }
 
   getCellClasses(column: TableColumn<T>): string {
-    const baseClasses = 'p-4 align-middle';
-    const frozenClasses = column.frozen ? 'sticky bg-background z-10' : '';
-    const leftClasses = column.frozen === true || column.frozen === 'left' ? 'left-0' : '';
-    const rightClasses = column.frozen === 'right' ? 'right-0' : '';
+    const baseClasses = 'p-4 align-middle relative transition-colors';
+    const frozenClasses = this.getFrozenClasses(column);
     
-    return `${baseClasses} ${frozenClasses} ${leftClasses} ${rightClasses}`.trim();
+    return `${baseClasses} ${frozenClasses}`.trim();
+  }
+
+  private getFrozenClasses(column: TableColumn<T>): string {
+    const isLeftFrozen = column.frozen === true || column.frozen === 'left';
+    const isRightFrozen = column.frozen === 'right';
+    
+    if (!isLeftFrozen && !isRightFrozen) return '';
+    
+    const isLastLeftFrozen = isLeftFrozen && this.leftFrozenColumns[this.leftFrozenColumns.length - 1]?.key === column.key;
+    const isFirstRightFrozen = isRightFrozen && this.rightFrozenColumns[0]?.key === column.key;
+    
+    let classes = 'sticky z-30 ';
+    
+    if (isLeftFrozen) {
+      classes += 'left-0 ';
+    }
+    if (isRightFrozen) {
+      classes += 'right-0 ';
+    }
+    
+    if (isLastLeftFrozen) {
+      classes += 'border-r-2 border-border shadow-lg shadow-black/5 ';
+    }
+    if (isFirstRightFrozen) {
+      classes += 'border-l-2 border-border shadow-lg shadow-black/5 ';
+    }
+    
+    return classes.trim();
+  }
+
+  getColumnStyle(column: TableColumn<T>): any {
+    const style: any = {
+      width: column.width,
+      minWidth: column.minWidth,
+      maxWidth: column.maxWidth
+    };
+    
+    const isLeftFrozen = column.frozen === true || column.frozen === 'left';
+    if (isLeftFrozen) {
+      style.left = this.calculateLeftOffset(column) + 'px';
+      style.top = this.stickyTop + 'px';
+    }
+    
+    const isRightFrozen = column.frozen === 'right';
+    if (isRightFrozen) {
+      style.top = this.stickyTop + 'px';
+    }
+    
+    return style;
+  }
+
+  private calculateLeftOffset(column: TableColumn<T>): number {
+    let offset = 0;
+    
+    // Add expand button width if present
+    if (this.expandable) {
+      offset += 48;
+    }
+    
+    // Add widths of previous left frozen columns
+    for (const leftCol of this.leftFrozenColumns) {
+      if (leftCol.key === column.key) break;
+      
+      const width = leftCol.width;
+      if (width) {
+        offset += typeof width === 'number' ? width : parseInt(String(width));
+      } else if (leftCol.minWidth) {
+        offset += typeof leftCol.minWidth === 'number' ? leftCol.minWidth : parseInt(String(leftCol.minWidth));
+      } else {
+        offset += 120; // Default width for flexible frozen columns
+      }
+    }
+    
+    return offset;
+  }
+
+  getCellStyle(column: TableColumn<T>): any {
+    const style: any = {
+      width: column.width,
+      minWidth: column.minWidth,
+      maxWidth: column.maxWidth
+    };
+    
+    const isLeftFrozen = column.frozen === true || column.frozen === 'left';
+    if (isLeftFrozen) {
+      style.left = this.calculateLeftOffset(column) + 'px';
+    }
+    
+    return style;
   }
 
   getCellContentClasses(column: TableColumn<T>): string {
@@ -287,15 +578,34 @@ export class AdvancedTableComponent<T = any> implements OnInit, OnChanges {
     this.sort.emit({ field, direction });
   }
 
+  private scrollToTop(): void {
+    if (!this.tableContainer?.nativeElement) return;
+    
+    const tableRect = this.tableContainer.nativeElement.getBoundingClientRect();
+    const offsetHeader = this.sticky?.offsetHeader || 0;
+    
+    // Only scroll if the table top is not visible or if we're scrolled past it
+    if (tableRect.top < offsetHeader) {
+      const scrollTop = window.pageYOffset + tableRect.top - offsetHeader;
+      
+      window.scrollTo({
+        top: scrollTop,
+        behavior: 'smooth'
+      });
+    }
+  }
+
   onPageSizeChange(): void {
     this.currentPage = 1;
     this.pageChange.emit({ page: this.currentPage, pageSize: this.currentPageSize });
+    this.scrollToTop();
   }
 
   onPreviousPage(): void {
     if (this.currentPage > 1) {
       this.currentPage--;
       this.pageChange.emit({ page: this.currentPage, pageSize: this.currentPageSize });
+      this.scrollToTop();
     }
   }
 
@@ -303,6 +613,7 @@ export class AdvancedTableComponent<T = any> implements OnInit, OnChanges {
     if (this.currentPage < this.totalPages) {
       this.currentPage++;
       this.pageChange.emit({ page: this.currentPage, pageSize: this.currentPageSize });
+      this.scrollToTop();
     }
   }
 }

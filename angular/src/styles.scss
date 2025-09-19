@@ -53,3 +53,26 @@ body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
 }
+
+/* Table sticky header and cell blur effects */
+.table-header-blur {
+  background: hsl(var(--card) / 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.table-cell-blur {
+  background: hsl(var(--background) / 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.frozen-cell {
+  background: hsl(var(--background) / 0.98);
+}
+
+.loading-overlay {
+  background: hsl(var(--card) / 0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
