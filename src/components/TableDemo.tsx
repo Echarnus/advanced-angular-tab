@@ -110,7 +110,7 @@ export function TableDemo() {
     {
       key: 'email',
       title: 'Email',
-      width: 250,
+      // No width specified - will take available space
       sortable: true,
       ellipsis: true,
     },
@@ -139,7 +139,7 @@ export function TableDemo() {
     {
       key: 'department',
       title: 'Department',
-      width: 150,
+      // No width specified - will take available space
       sortable: true,
     },
     {
@@ -165,7 +165,7 @@ export function TableDemo() {
     {
       key: 'description',
       title: 'Description',
-      width: 300,
+      // No width specified - will take available space
       ellipsis: true,
       multiline: false,
     },
@@ -221,7 +221,7 @@ export function TableDemo() {
         <div className="space-y-2">
           <h1 className="text-2xl font-semibold">Advanced Data Table</h1>
           <p className="text-muted-foreground">
-            A comprehensive table component with sticky headers, sorting, pagination, expandable rows, and frozen columns.
+            A comprehensive table component with sticky headers, sorting, pagination, expandable rows, frozen columns, and flexible width handling.
           </p>
         </div>
         <ThemeSwitcher />
@@ -249,7 +249,7 @@ export function TableDemo() {
             offsetHeader: 0,
           }}
           scroll={{
-            x: 1400,
+            x: 1200, // Reduced since some columns are now flexible
           }}
           onPageChange={handlePageChange}
           onSort={handleSort}
@@ -284,9 +284,9 @@ export function TableDemo() {
         <Card className="p-4">
           <h3 className="font-semibold mb-2">Column Features</h3>
           <ul className="text-sm space-y-1 text-muted-foreground">
+            <li>• Fixed & flexible widths</li>
             <li>• Text ellipsis handling</li>
             <li>• Custom cell rendering</li>
-            <li>• Flexible width controls</li>
             <li>• Horizontal scrolling</li>
           </ul>
         </Card>

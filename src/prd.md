@@ -71,10 +71,11 @@
    - Proper contrast ratios for accessibility
 
 7. **Column Width Management**
+   - **Optional width definitions** - columns without width take available space
    - Ellipsis overflow handling
    - Min/max width constraints
    - Multiline text support
-   - Flexible width configuration
+   - Auto vs fixed table layout based on column configuration
 
 8. **Responsive Scrolling**
    - Horizontal scroll for wide tables
@@ -139,6 +140,13 @@
 - Proper z-index layering with other frozen elements
 - Supports both manual button clicks and row click expansion modes
 - Visual indicators adapt to interaction mode
+
+### ✅ Flexible Column Width System
+- Optional width definitions for columns
+- Columns without specified widths automatically take remaining space
+- Maintains proportional distribution among flexible columns
+- Smart table layout switching (auto vs fixed based on configuration)
+- Preserves frozen column positioning with both fixed and flexible widths
 
 ### ✅ Removed Height Constraints
 - Eliminated fixed table height to prevent double scrollbars

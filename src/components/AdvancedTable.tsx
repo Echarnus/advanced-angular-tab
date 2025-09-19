@@ -76,6 +76,27 @@ export function AdvancedTable<T extends Record<string, any>>({
   const rightFrozenColumns = columns.filter(col => col.frozen === 'right');
   const scrollableColumns = columns.filter(col => !col.frozen);
 
+  // Calculate total fixed width and flexible columns
+  const calculateColumnWidths = () => {
+    let totalFixedWidth = 0;
+    let flexibleColumns = 0;
+    
+    // Add expand button width if present
+    if (expandable) totalFixedWidth += 48;
+    
+    columns.forEach(col => {
+      if (col.width) {
+        totalFixedWidth += typeof col.width === 'number' ? col.width : parseInt(String(col.width));
+      } else {
+        flexibleColumns++;
+      }
+    });
+    
+    return { totalFixedWidth, flexibleColumns };
+  };
+
+  const { totalFixedWidth, flexibleColumns } = calculateColumnWidths();
+
   const getRowKey = (record: T, index: number): string => {
     return typeof rowKey === 'function' ? rowKey(record) : String(record[rowKey] || index);
   };
@@ -151,9 +172,12 @@ export function AdvancedTable<T extends Record<string, any>>({
       for (const leftCol of leftFrozenColumns) {
         if (leftCol.key === column.key) break;
         const width = leftCol.width;
-        leftOffset += typeof width === 'number' ? width : parseInt(String(width) || '100');
+        leftOffset += typeof width === 'number' ? width : parseInt(String(width) || '200');
       }
     }
+
+    // Determine column width - if no width specified, use auto for flexible columns
+    const columnWidth = column.width || (flexibleColumns > 0 ? 'auto' : undefined);
     
     return (
       <th
@@ -168,7 +192,7 @@ export function AdvancedTable<T extends Record<string, any>>({
           isFirstRightFrozen && "border-l-2 border-border shadow-lg shadow-black/5"
         )}
         style={{
-          width: column.width,
+          width: columnWidth,
           minWidth: column.minWidth,
           maxWidth: column.maxWidth,
           ...(isLeftFrozen && { left: leftOffset }),
@@ -222,9 +246,12 @@ export function AdvancedTable<T extends Record<string, any>>({
       for (const leftCol of leftFrozenColumns) {
         if (leftCol.key === column.key) break;
         const width = leftCol.width;
-        leftOffset += typeof width === 'number' ? width : parseInt(String(width) || '100');
+        leftOffset += typeof width === 'number' ? width : parseInt(String(width) || '200');
       }
     }
+
+    // Determine column width - if no width specified, use auto for flexible columns
+    const columnWidth = column.width || (flexibleColumns > 0 ? 'auto' : undefined);
     
     return (
       <td
@@ -240,7 +267,7 @@ export function AdvancedTable<T extends Record<string, any>>({
           isFirstRightFrozen && "border-l-2 border-border shadow-lg shadow-black/5"
         )}
         style={{
-          width: column.width,
+          width: columnWidth,
           minWidth: column.minWidth,
           maxWidth: column.maxWidth,
           ...(isLeftFrozen && { left: leftOffset }),
@@ -366,7 +393,10 @@ export function AdvancedTable<T extends Record<string, any>>({
           ref={tableRef}
           className="overflow-x-auto flex-1"
         >
-          <table className="w-full table-fixed border-collapse" style={{ minWidth: scroll?.x }}>
+          <table className={cn(
+            "w-full border-collapse",
+            flexibleColumns > 0 ? "table-auto" : "table-fixed"
+          )} style={{ minWidth: scroll?.x }}>
             {/* First thead for layout spacing - invisible */}
             <thead className="invisible">
               <tr>
@@ -377,7 +407,7 @@ export function AdvancedTable<T extends Record<string, any>>({
                   <th
                     key={`layout-${column.key}`}
                     style={{
-                      width: column.width,
+                      width: column.width || (flexibleColumns > 0 ? 'auto' : undefined),
                       minWidth: column.minWidth,
                       maxWidth: column.maxWidth
                     }}
@@ -390,7 +420,7 @@ export function AdvancedTable<T extends Record<string, any>>({
                   <th
                     key={`layout-${column.key}`}
                     style={{
-                      width: column.width,
+                      width: column.width || (flexibleColumns > 0 ? 'auto' : undefined),
                       minWidth: column.minWidth,
                       maxWidth: column.maxWidth
                     }}
@@ -403,7 +433,7 @@ export function AdvancedTable<T extends Record<string, any>>({
                   <th
                     key={`layout-${column.key}`}
                     style={{
-                      width: column.width,
+                      width: column.width || (flexibleColumns > 0 ? 'auto' : undefined),
                       minWidth: column.minWidth,
                       maxWidth: column.maxWidth
                     }}
