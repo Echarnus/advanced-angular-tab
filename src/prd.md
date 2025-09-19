@@ -72,10 +72,12 @@
 
 7. **Column Width Management**
    - **Optional width definitions** - columns without width take available space
-   - Ellipsis overflow handling
-   - Min/max width constraints
-   - Multiline text support
+   - **Min/max width constraints** for flexible column sizing
+   - Fixed width columns for consistent presentation (badges, actions)
+   - Ellipsis overflow handling with tooltips
+   - Multiline text support option
    - Auto vs fixed table layout based on column configuration
+   - Smart frozen column positioning with flexible widths
 
 8. **Responsive Scrolling**
    - Horizontal scroll for wide tables
@@ -145,6 +147,21 @@
 - Optional width definitions for columns
 - Columns without specified widths automatically take remaining space
 - Maintains proportional distribution among flexible columns
+- Smart table layout switching (auto vs fixed based on configuration)
+- Preserves frozen column positioning with both fixed and flexible widths
+
+### Column Width Configuration System
+
+**Width Type Options**:
+1. **Fixed Width** (`width: 120`): Absolute pixel width for consistent sizing
+2. **Min/Max Width** (`minWidth: 100, maxWidth: 300`): Flexible sizing within constraints
+3. **No Width Constraints**: Flexible columns that share available space
+4. **Mixed Configuration**: Combination of fixed and flexible columns
+
+**Best Practices**:
+- Use fixed widths for UI elements (badges, buttons, icons)
+- Use min/max for content that varies in length (names, descriptions)
+- Leave no constraints for flexible content areas
 - Smart table layout switching (auto vs fixed based on configuration)
 - Preserves frozen column positioning with both fixed and flexible widths
 

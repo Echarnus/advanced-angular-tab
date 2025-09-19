@@ -86,8 +86,10 @@ export function AdvancedTable<T extends Record<string, any>>({
     
     columns.forEach(col => {
       if (col.width) {
+        // Only count columns with explicit width as fixed
         totalFixedWidth += typeof col.width === 'number' ? col.width : parseInt(String(col.width));
       } else {
+        // Columns with minWidth/maxWidth or no width constraints are flexible
         flexibleColumns++;
       }
     });
@@ -172,7 +174,15 @@ export function AdvancedTable<T extends Record<string, any>>({
       for (const leftCol of leftFrozenColumns) {
         if (leftCol.key === column.key) break;
         const width = leftCol.width;
-        leftOffset += typeof width === 'number' ? width : parseInt(String(width) || '200');
+        // For columns with explicit width, use that
+        // For columns with only minWidth/maxWidth, use minWidth or fallback
+        if (width) {
+          leftOffset += typeof width === 'number' ? width : parseInt(String(width));
+        } else if (leftCol.minWidth) {
+          leftOffset += typeof leftCol.minWidth === 'number' ? leftCol.minWidth : parseInt(String(leftCol.minWidth));
+        } else {
+          leftOffset += 120; // Reasonable default for flexible frozen columns
+        }
       }
     }
 
@@ -246,7 +256,15 @@ export function AdvancedTable<T extends Record<string, any>>({
       for (const leftCol of leftFrozenColumns) {
         if (leftCol.key === column.key) break;
         const width = leftCol.width;
-        leftOffset += typeof width === 'number' ? width : parseInt(String(width) || '200');
+        // For columns with explicit width, use that
+        // For columns with only minWidth/maxWidth, use minWidth or fallback
+        if (width) {
+          leftOffset += typeof width === 'number' ? width : parseInt(String(width));
+        } else if (leftCol.minWidth) {
+          leftOffset += typeof leftCol.minWidth === 'number' ? leftCol.minWidth : parseInt(String(leftCol.minWidth));
+        } else {
+          leftOffset += 120; // Reasonable default for flexible frozen columns
+        }
       }
     }
 

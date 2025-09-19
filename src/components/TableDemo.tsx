@@ -92,13 +92,16 @@ export function TableDemo() {
     {
       key: 'id',
       title: 'ID',
+      minWidth: 80,
+      maxWidth: 120,
       frozen: true,
       sortable: true
     },
     {
       key: 'name',
       title: 'Name',
-      width: 200,
+      minWidth: 150,
+      maxWidth: 250,
       sortable: true,
       render: (value, record) => (
         <div className="font-medium text-foreground">{value}</div>
@@ -107,13 +110,15 @@ export function TableDemo() {
     {
       key: 'email',
       title: 'Email',
-      // No width specified - will take available space
+      minWidth: 200,
+      maxWidth: 300,
+      ellipsis: true,
       sortable: true
     },
     {
       key: 'role',
       title: 'Role',
-      width: 120,
+      width: 120, // Fixed width for badges
       sortable: true,
       render: (value) => (
         <Badge variant="secondary">{value}</Badge>
@@ -122,7 +127,7 @@ export function TableDemo() {
     {
       key: 'status',
       title: 'Status',
-      width: 120,
+      width: 120, // Fixed width for status badges
       sortable: true,
       render: (value) => (
         <Badge 
@@ -135,33 +140,39 @@ export function TableDemo() {
     {
       key: 'department',
       title: 'Department',
-      // No width specified - will take available space
+      minWidth: 120,
+      maxWidth: 180,
       sortable: true,
     },
     {
       key: 'joinDate',
       title: 'Join Date',
-      width: 120,
+      minWidth: 100,
+      maxWidth: 140,
       sortable: true,
     },
     {
       key: 'lastLogin',
       title: 'Last Login',
-      width: 120,
+      minWidth: 100,
+      maxWidth: 140,
       sortable: true,
       frozen: 'right',
     },
     {
       key: 'salary',
       title: 'Salary',
-      width: 120,
+      minWidth: 100,
+      maxWidth: 150,
       sortable: true,
       render: (value) => `$${value.toLocaleString()}`,
     },
     {
       key: 'description',
       title: 'Description',
-      // No width specified - will take available space
+      minWidth: 200,
+      // No maxWidth specified - can grow as needed
+      ellipsis: true,
       multiline: false,
     },
   ];
@@ -216,7 +227,7 @@ export function TableDemo() {
         <div className="space-y-2">
           <h1 className="text-2xl font-semibold">Advanced Data Table</h1>
           <p className="text-muted-foreground">
-            A comprehensive table component with sticky headers, sorting, pagination, expandable rows, frozen columns, and flexible width handling.
+            A comprehensive table component with sticky headers, sorting, pagination, expandable rows, frozen columns, and flexible width handling with min/max constraints.
           </p>
         </div>
         <ThemeSwitcher />
@@ -279,7 +290,7 @@ export function TableDemo() {
         <Card className="p-4">
           <h3 className="font-semibold mb-2">Column Features</h3>
           <ul className="text-sm space-y-1 text-muted-foreground">
-            <li>• Fixed & flexible widths</li>
+            <li>• Fixed, min/max & flexible widths</li>
             <li>• Text ellipsis handling</li>
             <li>• Custom cell rendering</li>
             <li>• Horizontal scrolling</li>
