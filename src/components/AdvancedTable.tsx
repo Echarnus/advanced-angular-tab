@@ -64,6 +64,24 @@ export function AdvancedTable<T extends Record<string, any>>({
     return typeof rowKey === 'function' ? rowKey(record) : String(record[rowKey] || index);
   };
 
+  const scrollToTop = () => {
+    if (tableRef.current) {
+      // Scroll to the top of the table container
+      const tableRect = tableRef.current.getBoundingClientRect();
+      const scrollTop = window.pageYOffset + tableRect.top - (sticky?.offsetHeader || 0);
+      
+      window.scrollTo({
+        top: scrollTop,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  const handlePageChangeWithScroll = (page: number, pageSize: number) => {
+    onPageChange?.(page, pageSize);
+    scrollToTop();
+  };
+
   const handleSort = (column: TableColumn<T>) => {
     if (!column.sortable) return;
 
@@ -262,7 +280,7 @@ export function AdvancedTable<T extends Record<string, any>>({
               <span className="text-sm text-muted-foreground">Show</span>
               <Select
                 value={pageSize.toString()}
-                onValueChange={(value) => onPageChange?.(1, parseInt(value))}
+                onValueChange={(value) => handlePageChangeWithScroll(1, parseInt(value))}
               >
                 <SelectTrigger className="w-20">
                   <SelectValue />
@@ -283,7 +301,7 @@ export function AdvancedTable<T extends Record<string, any>>({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onPageChange?.(current - 1, pageSize)}
+            onClick={() => handlePageChangeWithScroll(current - 1, pageSize)}
             disabled={current <= 1}
           >
             <CaretLeft size={16} />
@@ -296,7 +314,7 @@ export function AdvancedTable<T extends Record<string, any>>({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onPageChange?.(current + 1, pageSize)}
+            onClick={() => handlePageChangeWithScroll(current + 1, pageSize)}
             disabled={current >= totalPages}
           >
             <CaretRight size={16} />
