@@ -5,6 +5,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ThemeSwitcher } from '@/components/ThemeSwitcher';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Gear, Eye, EyeClosed } from '@phosphor-icons/react';
 
 interface User {
   id: string;
@@ -60,6 +63,7 @@ const generateSampleData = (): User[] => {
 export function TableDemo() {
   const [data, setData] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showConfig, setShowConfig] = useState(false);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -73,40 +77,8 @@ export function TableDemo() {
     direction: null
   });
 
-  const allData = generateSampleData();
-
-  useEffect(() => {
-    // Simulate loading
-    setLoading(true);
-    setTimeout(() => {
-      let filteredData = [...allData];
-      
-      // Apply sorting
-      if (sortState.field && sortState.direction) {
-        filteredData.sort((a, b) => {
-          const aVal = a[sortState.field as keyof User];
-          const bVal = b[sortState.field as keyof User];
-          
-          let comparison = 0;
-          if (aVal < bVal) comparison = -1;
-          if (aVal > bVal) comparison = 1;
-          
-          return sortState.direction === 'desc' ? -comparison : comparison;
-        });
-      }
-
-      // Apply pagination
-      const startIndex = (pagination.current - 1) * pagination.pageSize;
-      const endIndex = startIndex + pagination.pageSize;
-      const paginatedData = filteredData.slice(startIndex, endIndex);
-
-      setData(paginatedData);
-      setPagination(prev => ({ ...prev, total: filteredData.length }));
-      setLoading(false);
-    }, 500);
-  }, [pagination.current, pagination.pageSize, sortState]);
-
-  const columns: TableColumn<User>[] = [
+  // Default column configuration
+  const defaultColumns: TableColumn<User>[] = [
     {
       key: 'id',
       title: 'ID',
@@ -136,7 +108,7 @@ export function TableDemo() {
     {
       key: 'role',
       title: 'Role',
-      minWidth: 300, // Fixed width for badges
+      width: 120,
       sortable: true,
       render: (value) => (
         <Badge variant="secondary">{value}</Badge>
@@ -145,7 +117,7 @@ export function TableDemo() {
     {
       key: 'status',
       title: 'Status',
-      width: 120, // Fixed width for status badges
+      width: 120,
       sortable: true,
       render: (value) => (
         <Badge 
@@ -181,7 +153,6 @@ export function TableDemo() {
       title: 'Description',
       minWidth: 200,
       maxWidth: 450,
-      // No maxWidth specified - can grow as needed
       ellipsis: true
     },
     {
@@ -193,6 +164,95 @@ export function TableDemo() {
       render: (value) => `$${value.toLocaleString()}`,
     }
   ];
+
+  const [columns, setColumns] = useState<TableColumn<User>[]>(defaultColumns);
+  const [configText, setConfigText] = useState(JSON.stringify(defaultColumns, null, 2));
+
+  const allData = generateSampleData();
+
+  useEffect(() => {
+    // Simulate loading
+    setLoading(true);
+    setTimeout(() => {
+      let filteredData = [...allData];
+      
+      // Apply sorting
+      if (sortState.field && sortState.direction) {
+        filteredData.sort((a, b) => {
+          const aVal = a[sortState.field as keyof User];
+          const bVal = b[sortState.field as keyof User];
+          
+          let comparison = 0;
+          if (aVal < bVal) comparison = -1;
+          if (aVal > bVal) comparison = 1;
+          
+          return sortState.direction === 'desc' ? -comparison : comparison;
+        });
+      }
+
+      // Apply pagination
+      const startIndex = (pagination.current - 1) * pagination.pageSize;
+      const endIndex = startIndex + pagination.pageSize;
+      const paginatedData = filteredData.slice(startIndex, endIndex);
+
+      setData(paginatedData);
+      setPagination(prev => ({ ...prev, total: filteredData.length }));
+      setLoading(false);
+    }, 500);
+  }, [pagination.current, pagination.pageSize, sortState]);
+
+  // Handle configuration updates
+  const handleConfigUpdate = () => {
+    try {
+      const parsedColumns = JSON.parse(configText);
+      // Add render functions back for specific columns
+      const updatedColumns = parsedColumns.map((col: any) => {
+        if (col.key === 'name') {
+          return {
+            ...col,
+            render: (value: any, record: User) => (
+              <div className="font-medium text-foreground">{value}</div>
+            ),
+          };
+        }
+        if (col.key === 'role') {
+          return {
+            ...col,
+            render: (value: any) => (
+              <Badge variant="secondary">{value}</Badge>
+            ),
+          };
+        }
+        if (col.key === 'status') {
+          return {
+            ...col,
+            render: (value: any) => (
+              <Badge 
+                variant={value === 'active' ? 'default' : value === 'pending' ? 'secondary' : 'destructive'}
+              >
+                {value}
+              </Badge>
+            ),
+          };
+        }
+        if (col.key === 'salary') {
+          return {
+            ...col,
+            render: (value: any) => `$${value.toLocaleString()}`,
+          };
+        }
+        return col;
+      });
+      setColumns(updatedColumns);
+    } catch (error) {
+      console.error('Invalid JSON configuration:', error);
+    }
+  };
+
+  const resetConfig = () => {
+    setColumns(defaultColumns);
+    setConfigText(JSON.stringify(defaultColumns, null, 2));
+  };
 
   const handlePageChange = (page: number, pageSize: number) => {
     setPagination(prev => ({ ...prev, current: page, pageSize }));
@@ -247,8 +307,163 @@ export function TableDemo() {
             A comprehensive table component with sticky headers, sorting, pagination, expandable rows, frozen columns, and flexible width handling with min/max constraints.
           </p>
         </div>
-        <ThemeSwitcher />
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowConfig(!showConfig)}
+          >
+            <Gear className="w-4 h-4 mr-2" />
+            {showConfig ? 'Hide Config' : 'Show Config'}
+          </Button>
+          <ThemeSwitcher />
+        </div>
       </div>
+
+      {showConfig && (
+        <Card className="p-6">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold">Column Configuration</h3>
+                <p className="text-sm text-muted-foreground">
+                  Edit the JSON configuration to test different column scenarios. Render functions will be automatically applied.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" onClick={handleConfigUpdate}>
+                  Apply Changes
+                </Button>
+                <Button size="sm" variant="outline" onClick={resetConfig}>
+                  Reset to Default
+                </Button>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="config">Column Configuration (JSON)</Label>
+              <Textarea
+                id="config"
+                value={configText}
+                onChange={(e) => setConfigText(e.target.value)}
+                className="min-h-[400px] font-mono text-sm"
+                placeholder="Edit column configuration..."
+              />
+            </div>
+            
+            <div className="bg-muted p-4 rounded-md">
+              <h4 className="font-semibold mb-2">Configuration Options:</h4>
+              <ul className="text-sm space-y-1 text-muted-foreground">
+                <li><code>width</code>: Fixed width (e.g., 120)</li>
+                <li><code>minWidth</code>: Minimum width constraint</li>
+                <li><code>maxWidth</code>: Maximum width constraint</li>
+                <li><code>frozen</code>: Make column sticky on horizontal scroll</li>
+                <li><code>sortable</code>: Enable sorting for this column</li>
+                <li><code>ellipsis</code>: Truncate text with ellipsis when it overflows</li>
+              </ul>
+            </div>
+
+            <div className="space-y-3">
+              <h4 className="font-semibold">Quick Test Scenarios:</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const scenario = [...defaultColumns];
+                    scenario[0].frozen = true;
+                    scenario[1].frozen = true; // Make name frozen too
+                    setConfigText(JSON.stringify(scenario, null, 2));
+                  }}
+                >
+                  Multi-Frozen Columns
+                </Button>
+                
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const scenario = defaultColumns.map(col => ({
+                      ...col,
+                      width: col.key === 'description' ? undefined : 150, // Only description flexible
+                      minWidth: undefined,
+                      maxWidth: undefined
+                    }));
+                    setConfigText(JSON.stringify(scenario, null, 2));
+                  }}
+                >
+                  Fixed + One Flexible
+                </Button>
+                
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const scenario = defaultColumns.map(col => ({
+                      ...col,
+                      width: undefined,
+                      minWidth: 100,
+                      maxWidth: col.key === 'description' ? 200 : 150, // Constrained description
+                      ellipsis: true
+                    }));
+                    setConfigText(JSON.stringify(scenario, null, 2));
+                  }}
+                >
+                  All Min/Max + Ellipsis
+                </Button>
+                
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const scenario = defaultColumns.map(col => ({
+                      ...col,
+                      width: undefined,
+                      minWidth: undefined,
+                      maxWidth: undefined, // No constraints - grow freely
+                      ellipsis: false
+                    }));
+                    setConfigText(JSON.stringify(scenario, null, 2));
+                  }}
+                >
+                  No Width Constraints
+                </Button>
+                
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const scenario = [...defaultColumns];
+                    scenario[0].frozen = true;
+                    scenario[1].frozen = true;
+                    scenario[2].frozen = true; // First 3 columns frozen
+                    setConfigText(JSON.stringify(scenario, null, 2));
+                  }}
+                >
+                  Triple Frozen
+                </Button>
+                
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const scenario = defaultColumns.map(col => ({
+                      ...col,
+                      width: col.key === 'description' ? undefined : undefined,
+                      minWidth: col.key === 'description' ? 400 : 80,
+                      maxWidth: col.key === 'description' ? 600 : 120,
+                      ellipsis: col.key === 'description'
+                    }));
+                    setConfigText(JSON.stringify(scenario, null, 2));
+                  }}
+                >
+                  Wide Description
+                </Button>
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
 
       <div>
         <AdvancedTable
