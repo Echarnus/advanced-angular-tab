@@ -82,14 +82,20 @@ export function AdvancedTable<T extends Record<string, any>>({
 
   const scrollToTop = () => {
     if (tableRef.current) {
-      // Scroll to the top of the table container
       const tableRect = tableRef.current.getBoundingClientRect();
-      const scrollTop = window.pageYOffset + tableRect.top - (sticky?.offsetHeader || 0);
+      const offsetHeader = sticky?.offsetHeader || 0;
       
-      window.scrollTo({
-        top: scrollTop,
-        behavior: 'smooth'
-      });
+      // Only scroll if the table top is not visible or if we're scrolled past it
+      // Check if table top is above the viewport (considering any offset header)
+      if (tableRect.top < offsetHeader) {
+        const scrollTop = window.pageYOffset + tableRect.top - offsetHeader;
+        
+        window.scrollTo({
+          top: scrollTop,
+          behavior: 'smooth'
+        });
+      }
+      // If table is already visible at the top, don't scroll
     }
   };
 
