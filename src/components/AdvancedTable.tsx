@@ -99,6 +99,8 @@ export function AdvancedTable<T extends Record<string, any>>({
   const renderColumnHeader = (column: TableColumn<T>) => {
     const isLeftFrozen = column.frozen === true || column.frozen === 'left';
     const isRightFrozen = column.frozen === 'right';
+    const isLastLeftFrozen = isLeftFrozen && leftFrozenColumns[leftFrozenColumns.length - 1]?.key === column.key;
+    const isFirstRightFrozen = isRightFrozen && rightFrozenColumns[0]?.key === column.key;
     
     // Calculate left offset for left frozen columns
     let leftOffset = 0;
@@ -117,10 +119,13 @@ export function AdvancedTable<T extends Record<string, any>>({
       <th
         key={column.key}
         className={cn(
-          "px-4 py-3 text-left text-sm font-medium text-foreground bg-card/95 backdrop-blur-sm border-b border-border",
+          "px-4 py-3 text-left text-sm font-medium text-foreground bg-card/95 backdrop-blur-sm border-b border-border relative",
           isLeftFrozen && "sticky z-50",
           isRightFrozen && "sticky right-0 z-40",
-          column.sortable && "cursor-pointer hover:bg-muted/50 transition-colors"
+          column.sortable && "cursor-pointer hover:bg-muted/50 transition-colors",
+          // Add visual distinction for frozen columns
+          isLastLeftFrozen && "border-r-2 border-border shadow-lg shadow-black/5",
+          isFirstRightFrozen && "border-l-2 border-border shadow-lg shadow-black/5"
         )}
         style={{
           width: column.width,
@@ -165,6 +170,8 @@ export function AdvancedTable<T extends Record<string, any>>({
     const content = column.render ? column.render(value, record, index) : value;
     const isLeftFrozen = column.frozen === true || column.frozen === 'left';
     const isRightFrozen = column.frozen === 'right';
+    const isLastLeftFrozen = isLeftFrozen && leftFrozenColumns[leftFrozenColumns.length - 1]?.key === column.key;
+    const isFirstRightFrozen = isRightFrozen && rightFrozenColumns[0]?.key === column.key;
     
     // Calculate left offset for left frozen columns
     let leftOffset = 0;
@@ -183,11 +190,14 @@ export function AdvancedTable<T extends Record<string, any>>({
       <td
         key={column.key}
         className={cn(
-          "px-4 py-3 text-sm border-b border-border",
-          isLeftFrozen && "sticky z-30 bg-card/95 backdrop-blur-sm",
-          isRightFrozen && "sticky right-0 z-20 bg-card/95 backdrop-blur-sm",
+          "px-4 py-3 text-sm border-b border-border relative transition-colors",
+          isLeftFrozen && "sticky z-30 bg-card/95 backdrop-blur-sm frozen-cell",
+          isRightFrozen && "sticky right-0 z-20 bg-card/95 backdrop-blur-sm frozen-cell",
           column.ellipsis && "max-w-0",
-          column.multiline ? "whitespace-normal" : "whitespace-nowrap"
+          column.multiline ? "whitespace-normal" : "whitespace-nowrap",
+          // Add visual distinction for frozen columns
+          isLastLeftFrozen && "border-r-2 border-border shadow-lg shadow-black/5",
+          isFirstRightFrozen && "border-l-2 border-border shadow-lg shadow-black/5"
         )}
         style={{
           width: column.width,
@@ -212,7 +222,7 @@ export function AdvancedTable<T extends Record<string, any>>({
     const isExpanded = expandedRows.has(key);
 
     return (
-      <td className="px-4 py-3 border-b border-border sticky left-0 z-30 bg-card backdrop-blur-sm w-12">
+      <td className="px-4 py-3 border-b border-border sticky left-0 z-30 bg-card/95 backdrop-blur-sm w-12 border-r-2 shadow-lg shadow-black/5 relative frozen-cell transition-colors">
         {expandable?.expandRowByClick ? (
           // Just show an indicator when row click expands
           <div className="flex items-center justify-center h-6 w-6">
@@ -374,7 +384,7 @@ export function AdvancedTable<T extends Record<string, any>>({
               <tr>
                 {expandable && (
                   <th 
-                    className="w-12 px-4 py-3 sticky left-0 z-50 bg-card backdrop-blur-sm border-b border-border"
+                    className="w-12 px-4 py-3 sticky left-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border border-r-2 shadow-lg shadow-black/5 relative"
                     style={{ top: `${stickyTop}px` }}
                   >
                     <span className="sr-only">Expand</span>
@@ -405,7 +415,7 @@ export function AdvancedTable<T extends Record<string, any>>({
                     <React.Fragment key={key}>
                       <tr
                         className={cn(
-                          "hover:bg-muted/50 transition-colors",
+                          "table-row hover:bg-muted/50 transition-colors",
                           expandable?.expandRowByClick && "cursor-pointer"
                         )}
                         onClick={() => expandable?.expandRowByClick && handleExpand(record)}

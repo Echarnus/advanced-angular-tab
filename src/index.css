@@ -94,3 +94,8 @@
   --radius-2xl: calc(var(--radius) * 3);
   --radius-full: 9999px;
 }
+
+/* Custom table hover styles for frozen columns */
+.table-row:hover .frozen-cell {
+  background-color: hsl(var(--muted) / 0.5) !important;
+}
