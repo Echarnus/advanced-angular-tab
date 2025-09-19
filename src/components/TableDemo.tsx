@@ -92,16 +92,13 @@ export function TableDemo() {
     {
       key: 'id',
       title: 'ID',
-      width: 100,
       frozen: true,
-      sortable: true,
-      ellipsis: true,
+      sortable: true
     },
     {
       key: 'name',
       title: 'Name',
       width: 200,
-      frozen: true,
       sortable: true,
       render: (value, record) => (
         <div className="font-medium text-foreground">{value}</div>
@@ -111,8 +108,7 @@ export function TableDemo() {
       key: 'email',
       title: 'Email',
       // No width specified - will take available space
-      sortable: true,
-      ellipsis: true,
+      sortable: true
     },
     {
       key: 'role',
@@ -166,7 +162,6 @@ export function TableDemo() {
       key: 'description',
       title: 'Description',
       // No width specified - will take available space
-      ellipsis: true,
       multiline: false,
     },
   ];
