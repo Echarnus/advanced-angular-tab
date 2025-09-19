@@ -103,7 +103,7 @@
             <td [attr.colspan]="columns.length + (expandable ? 1 : 0)" class="px-2 py-4">
               <ng-container *ngIf="expandable?.expandedRowTemplate; else defaultExpanded">
                 <ng-container 
-                  *ngTemplateOutlet="expandable.expandedRowTemplate; context: { 
+                  *ngTemplateOutlet="expandable!.expandedRowTemplate!; context: { 
                     $implicit: record, 
                     index: i 
                   }">
