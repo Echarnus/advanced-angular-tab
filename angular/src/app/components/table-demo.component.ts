@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdvancedTableComponent } from './advanced-table.component';
-import { BadgeComponent } from './ui/badge.component';
 import { ButtonComponent } from './ui/button.component';
 import { CardComponent } from './ui/card.component';
 import { ThemeSwitcherComponent } from './theme-switcher.component';
@@ -16,7 +15,6 @@ import { TableColumn, User } from '../types/table.types';
     CommonModule,
     FormsModule,
     AdvancedTableComponent,
-    BadgeComponent,
     ButtonComponent,
     CardComponent,
     ThemeSwitcherComponent
@@ -71,13 +69,72 @@ import { TableColumn, User } from '../types/table.types';
             [(ngModel)]="configText"
             class="w-full h-64 p-3 border rounded-md bg-background text-sm font-mono"
             placeholder="Column configuration JSON..."></textarea>
+          
+          <div class="bg-muted p-4 rounded-md">
+            <h4 class="font-semibold mb-2">Configuration Options:</h4>
+            <ul class="text-sm space-y-1 text-muted-foreground">
+              <li><code>width</code>: Fixed width (e.g., 120)</li>
+              <li><code>minWidth</code>: Minimum width constraint</li>
+              <li><code>maxWidth</code>: Maximum width constraint</li>
+              <li><code>frozen</code>: Make column sticky on horizontal scroll</li>
+              <li><code>sortable</code>: Enable sorting for this column</li>
+              <li><code>ellipsis</code>: Truncate text with ellipsis when it overflows</li>
+            </ul>
+          </div>
+
+          <div class="space-y-3">
+            <h4 class="font-semibold">Quick Test Scenarios:</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+              <app-button
+                size="sm"
+                variant="outline"
+                (click)="applyPreset('multiFrozen')">
+                Multi-Frozen Columns
+              </app-button>
+              
+              <app-button
+                size="sm"
+                variant="outline"
+                (click)="applyPreset('fixedPlusOne')">
+                Fixed + One Flexible
+              </app-button>
+              
+              <app-button
+                size="sm"
+                variant="outline"
+                (click)="applyPreset('allMinMax')">
+                All Min/Max + Ellipsis
+              </app-button>
+              
+              <app-button
+                size="sm"
+                variant="outline"
+                (click)="applyPreset('noConstraints')">
+                No Width Constraints
+              </app-button>
+              
+              <app-button
+                size="sm"
+                variant="outline"
+                (click)="applyPreset('tripleFrozen')">
+                Triple Frozen
+              </app-button>
+              
+              <app-button
+                size="sm"
+                variant="outline"
+                (click)="applyPreset('wideDescription')">
+                Wide Description
+              </app-button>
+            </div>
+          </div>
         </div>
       </app-card>
 
       <!-- Table -->
       <div class="space-y-6">
         <app-advanced-table
-          [data]="allData"
+          [data]="displayData"
           [columns]="columns"
           [loading]="loading"
           [expandable]="{
@@ -174,9 +231,16 @@ export class TableDemoComponent implements OnInit {
   showConfig = false;
   loading = true;
   allData: User[] = [];
+  displayData: User[] = [];
   columns: TableColumn<User>[] = [];
   configText = '';
   sections = Array.from({ length: 20 }, (_, i) => i);
+  
+  // Sort state
+  sortState: { field: string | null; direction: 'asc' | 'desc' | null } = {
+    field: null,
+    direction: null
+  };
 
   private defaultColumns: TableColumn<User>[] = [
     {
@@ -271,10 +335,34 @@ export class TableDemoComponent implements OnInit {
     this.configText = JSON.stringify(this.defaultColumns, null, 2);
     this.allData = this.dataService.generateSampleData();
     
-    // Simulate loading
+    // Initialize data loading
+    this.loadData();
+  }
+
+  private loadData(): void {
+    this.loading = true;
+    
+    // Simulate loading delay
     setTimeout(() => {
+      let filteredData = [...this.allData];
+      
+      // Apply sorting
+      if (this.sortState.field && this.sortState.direction) {
+        filteredData.sort((a, b) => {
+          const aVal = a[this.sortState.field as keyof User];
+          const bVal = b[this.sortState.field as keyof User];
+          
+          let comparison = 0;
+          if (aVal < bVal) comparison = -1;
+          if (aVal > bVal) comparison = 1;
+          
+          return this.sortState.direction === 'desc' ? -comparison : comparison;
+        });
+      }
+      
+      this.displayData = filteredData;
       this.loading = false;
-    }, 2000);
+    }, 300);
   }
 
   getExpandedRowRender(record: User, index: number): string {
@@ -305,6 +393,11 @@ export class TableDemoComponent implements OnInit {
 
   onSort(event: {field: string, direction: 'asc' | 'desc' | null}): void {
     console.log('Sort changed:', event);
+    this.sortState = {
+      field: event.direction ? event.field : null,
+      direction: event.direction
+    };
+    this.loadData();
   }
 
   onExpand(event: {expanded: boolean, record: User}): void {
@@ -330,5 +423,76 @@ export class TableDemoComponent implements OnInit {
       console.error('Invalid JSON configuration:', error);
       alert('Invalid JSON configuration. Please check your syntax.');
     }
+  }
+
+  applyPreset(presetType: string): void {
+    let scenario: TableColumn<User>[] = [];
+    
+    switch (presetType) {
+      case 'multiFrozen':
+        scenario = [...this.defaultColumns];
+        scenario[0].frozen = true;
+        scenario[1].frozen = true; // Make name frozen too
+        break;
+        
+      case 'fixedPlusOne':
+        scenario = this.defaultColumns.map(col => ({
+          ...col,
+          width: col.key === 'description' ? undefined : 150, // Only description flexible
+          minWidth: undefined,
+          maxWidth: undefined
+        }));
+        break;
+        
+      case 'allMinMax':
+        scenario = this.defaultColumns.map(col => ({
+          ...col,
+          width: undefined,
+          minWidth: 100,
+          maxWidth: col.key === 'description' ? 200 : 150, // Constrained description
+          ellipsis: true
+        }));
+        break;
+        
+      case 'noConstraints':
+        scenario = this.defaultColumns.map(col => ({
+          ...col,
+          width: undefined,
+          minWidth: undefined,
+          maxWidth: undefined, // No constraints - grow freely
+          ellipsis: false
+        }));
+        break;
+        
+      case 'tripleFrozen':
+        scenario = [...this.defaultColumns];
+        scenario[0].frozen = true;
+        scenario[1].frozen = true;
+        scenario[2].frozen = true; // First 3 columns frozen
+        break;
+        
+      case 'wideDescription':
+        scenario = this.defaultColumns.map(col => ({
+          ...col,
+          width: col.key === 'description' ? undefined : undefined,
+          minWidth: col.key === 'description' ? 400 : 80,
+          maxWidth: col.key === 'description' ? 600 : 120,
+          ellipsis: col.key === 'description'
+        }));
+        break;
+        
+      default:
+        scenario = [...this.defaultColumns];
+    }
+    
+    this.configText = JSON.stringify(scenario, null, 2);
+    // Apply render functions for known columns
+    scenario.forEach((col: TableColumn<User>) => {
+      const defaultCol = this.defaultColumns.find(dc => dc.key === col.key);
+      if (defaultCol && defaultCol.render) {
+        col.render = defaultCol.render;
+      }
+    });
+    this.columns = scenario;
   }
 }

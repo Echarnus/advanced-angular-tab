@@ -23,7 +23,7 @@ import { TableColumn, TableProps, SortState } from '../types/table.types';
 
         <!-- Table container -->
         <div #tableContainer class="overflow-x-auto flex-1" [style.max-height]="scroll?.y">
-          <table class="w-full border-collapse" [style.min-width]="scroll?.x">
+          <table [class]="getTableClasses()" [style.min-width]="scroll?.x">
             
             <!-- First thead for layout spacing - invisible -->
             <thead class="invisible">
@@ -31,23 +31,17 @@ import { TableColumn, TableProps, SortState } from '../types/table.types';
                 <th *ngIf="expandable" class="w-12 px-4 py-3"></th>
                 <th *ngFor="let column of leftFrozenColumns; trackBy: trackByColumn"
                     class="px-4 py-3"
-                    [style.width]="column.width"
-                    [style.min-width]="column.minWidth"
-                    [style.max-width]="column.maxWidth">
+                    [style]="getLayoutColumnStyle(column)">
                   {{ column.title }}
                 </th>
                 <th *ngFor="let column of scrollableColumns; trackBy: trackByColumn"
                     class="px-4 py-3"
-                    [style.width]="column.width"
-                    [style.min-width]="column.minWidth"
-                    [style.max-width]="column.maxWidth">
+                    [style]="getLayoutColumnStyle(column)">
                   {{ column.title }}
                 </th>
                 <th *ngFor="let column of rightFrozenColumns; trackBy: trackByColumn"
                     class="px-4 py-3"
-                    [style.width]="column.width"
-                    [style.min-width]="column.minWidth"
-                    [style.max-width]="column.maxWidth">
+                    [style]="getLayoutColumnStyle(column)">
                   {{ column.title }}
                 </th>
               </tr>
@@ -406,6 +400,24 @@ export class AdvancedTableComponent<T = any> implements OnInit, OnChanges, OnDes
     return Math.min(calculated, this.pagination.total);
   }
 
+  get hasFlexibleColumns(): boolean {
+    return this.columns.some(col => !col.width && (!col.minWidth || !col.maxWidth));
+  }
+
+  getTableClasses(): string {
+    const baseClasses = 'w-full border-collapse';
+    const layoutClasses = this.hasFlexibleColumns ? 'table-auto' : 'table-fixed';
+    return `${baseClasses} ${layoutClasses}`;
+  }
+
+  getLayoutColumnStyle(column: TableColumn<T>): any {
+    return {
+      width: column.width || (this.hasFlexibleColumns ? 'auto' : undefined),
+      minWidth: column.minWidth,
+      maxWidth: column.maxWidth
+    };
+  }
+
   trackByColumn(index: number, column: TableColumn<T>): string {
     return column.key;
   }
@@ -415,12 +427,40 @@ export class AdvancedTableComponent<T = any> implements OnInit, OnChanges, OnDes
   }
 
   getHeaderClasses(column: TableColumn<T>): string {
-    const baseClasses = 'h-12 px-4 text-left align-middle font-medium text-muted-foreground relative transition-colors';
-    const frozenClasses = this.getFrozenClasses(column);
+    const baseClasses = 'h-12 px-4 text-left align-middle font-medium text-muted-foreground relative transition-colors table-header-blur';
+    const frozenClasses = this.getFrozenHeaderClasses(column);
     const sortableClasses = column.sortable && !this.loading ? 'cursor-pointer hover:bg-muted/50' : '';
     const loadingClasses = this.loading ? 'opacity-50 cursor-not-allowed' : '';
     
     return `${baseClasses} ${frozenClasses} ${sortableClasses} ${loadingClasses}`.trim();
+  }
+
+  private getFrozenHeaderClasses(column: TableColumn<T>): string {
+    const isLeftFrozen = column.frozen === true || column.frozen === 'left';
+    const isRightFrozen = column.frozen === 'right';
+    
+    if (!isLeftFrozen && !isRightFrozen) return '';
+    
+    const isLastLeftFrozen = isLeftFrozen && this.leftFrozenColumns[this.leftFrozenColumns.length - 1]?.key === column.key;
+    const isFirstRightFrozen = isRightFrozen && this.rightFrozenColumns[0]?.key === column.key;
+    
+    let classes = 'sticky z-50 table-header-blur frozen-cell ';
+    
+    if (isLeftFrozen) {
+      classes += 'left-0 ';
+    }
+    if (isRightFrozen) {
+      classes += 'right-0 ';
+    }
+    
+    if (isLastLeftFrozen) {
+      classes += 'border-r-2 border-border shadow-lg shadow-black/5 ';
+    }
+    if (isFirstRightFrozen) {
+      classes += 'border-l-2 border-border shadow-lg shadow-black/5 ';
+    }
+    
+    return classes.trim();
   }
 
   getCellClasses(column: TableColumn<T>): string {
@@ -439,7 +479,7 @@ export class AdvancedTableComponent<T = any> implements OnInit, OnChanges, OnDes
     const isLastLeftFrozen = isLeftFrozen && this.leftFrozenColumns[this.leftFrozenColumns.length - 1]?.key === column.key;
     const isFirstRightFrozen = isRightFrozen && this.rightFrozenColumns[0]?.key === column.key;
     
-    let classes = 'sticky z-30 ';
+    let classes = 'sticky z-30 table-cell-blur frozen-cell ';
     
     if (isLeftFrozen) {
       classes += 'left-0 ';
@@ -460,7 +500,7 @@ export class AdvancedTableComponent<T = any> implements OnInit, OnChanges, OnDes
 
   getColumnStyle(column: TableColumn<T>): any {
     const style: any = {
-      width: column.width,
+      width: column.width || (this.hasFlexibleColumns ? 'auto' : undefined),
       minWidth: column.minWidth,
       maxWidth: column.maxWidth
     };
@@ -506,7 +546,7 @@ export class AdvancedTableComponent<T = any> implements OnInit, OnChanges, OnDes
 
   getCellStyle(column: TableColumn<T>): any {
     const style: any = {
-      width: column.width,
+      width: column.width || (this.hasFlexibleColumns ? 'auto' : undefined),
       minWidth: column.minWidth,
       maxWidth: column.maxWidth
     };
