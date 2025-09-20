@@ -22,7 +22,7 @@ import { TableColumn, TableProps, SortState } from '../types/table.types';
         </div>
 
         <!-- Table container -->
-        <div #tableContainer class="overflow-x-auto flex-1" [style.max-height]="scroll?.y">
+        <div #tableContainer class="overflow-x-auto flex-1 scrollbar-visible" [style.max-height]="scroll?.y">
           <table [class]="getTableClasses()" [style.min-width]="scroll?.x">
             
             <!-- First thead for layout spacing - invisible -->
@@ -400,8 +400,12 @@ export class AdvancedTableComponent<T = any> implements OnInit, OnChanges, OnDes
     return Math.min(calculated, this.pagination.total);
   }
 
+  get flexibleColumns(): number {
+    return this.columns.filter(col => !col.width).length;
+  }
+
   get hasFlexibleColumns(): boolean {
-    return this.columns.some(col => !col.width && (!col.minWidth || !col.maxWidth));
+    return this.flexibleColumns > 0;
   }
 
   getTableClasses(): string {
@@ -411,8 +415,21 @@ export class AdvancedTableComponent<T = any> implements OnInit, OnChanges, OnDes
   }
 
   getLayoutColumnStyle(column: TableColumn<T>): any {
+    // Determine column width - handle minWidth properly for flexible columns
+    let columnWidth: string | number | undefined;
+    if (column.width) {
+      columnWidth = column.width;
+    } else if (column.minWidth && !column.maxWidth) {
+      // For columns with only minWidth, use minWidth as base but allow growth
+      columnWidth = column.minWidth;
+    } else if (this.flexibleColumns > 0) {
+      columnWidth = 'auto';
+    } else {
+      columnWidth = undefined;
+    }
+
     return {
-      width: column.width || (this.hasFlexibleColumns ? 'auto' : undefined),
+      width: columnWidth,
       minWidth: column.minWidth,
       maxWidth: column.maxWidth
     };
@@ -499,8 +516,21 @@ export class AdvancedTableComponent<T = any> implements OnInit, OnChanges, OnDes
   }
 
   getColumnStyle(column: TableColumn<T>): any {
+    // Determine column width - handle minWidth properly for flexible columns
+    let columnWidth: string | number | undefined;
+    if (column.width) {
+      columnWidth = column.width;
+    } else if (column.minWidth && !column.maxWidth) {
+      // For columns with only minWidth, use minWidth as base but allow growth
+      columnWidth = column.minWidth;
+    } else if (this.flexibleColumns > 0) {
+      columnWidth = 'auto';
+    } else {
+      columnWidth = undefined;
+    }
+
     const style: any = {
-      width: column.width || (this.hasFlexibleColumns ? 'auto' : undefined),
+      width: columnWidth,
       minWidth: column.minWidth,
       maxWidth: column.maxWidth
     };
@@ -545,8 +575,21 @@ export class AdvancedTableComponent<T = any> implements OnInit, OnChanges, OnDes
   }
 
   getCellStyle(column: TableColumn<T>): any {
+    // Determine column width - handle minWidth properly for flexible columns
+    let columnWidth: string | number | undefined;
+    if (column.width) {
+      columnWidth = column.width;
+    } else if (column.minWidth && !column.maxWidth) {
+      // For columns with only minWidth, use minWidth as base but allow growth
+      columnWidth = column.minWidth;
+    } else if (this.flexibleColumns > 0) {
+      columnWidth = 'auto';
+    } else {
+      columnWidth = undefined;
+    }
+
     const style: any = {
-      width: column.width || (this.hasFlexibleColumns ? 'auto' : undefined),
+      width: columnWidth,
       minWidth: column.minWidth,
       maxWidth: column.maxWidth
     };
