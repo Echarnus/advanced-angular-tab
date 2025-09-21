@@ -1,0 +1,163 @@
+<div [class]="'flex flex-col ' + (className() || '')">
+  <div class="flex flex-col relative border rounded-lg bg-card">
+    <!-- Loading overlay -->
+    @if (loading()) {
+      <div class="absolute inset-0 z-[100] flex items-center justify-center bg-card/90 backdrop-blur-md">
+        <div class="bg-card/90 backdrop-blur-md rounded-lg px-6 py-4 shadow-lg border border-border">
+          <div class="flex items-center gap-3">
+            <div class="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full"></div>
+            <span class="text-sm font-medium text-foreground">Loading data...</span>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Table container -->
+    <div #tableContainer class="overflow-x-auto flex-1 scrollbar-visible" [style.max-height]="scroll()?.y">
+      <table [class]="getTableClasses()" [style.min-width]="scroll()?.x">
+        
+        <!-- First thead for layout spacing - invisible -->
+        <thead class="invisible">
+          <tr>
+            @if (expandable()) {
+              <th class="w-12 px-4 py-3"></th>
+            }
+            @for (column of leftFrozenColumns; track trackByColumn(index, column); let index = $index) {
+              <th class="px-4 py-3" [style]="getLayoutColumnStyle(column)">
+                {{ column.title }}
+              </th>
+            }
+            @for (column of scrollableColumns; track trackByColumn(index, column); let index = $index) {
+              <th class="px-4 py-3" [style]="getLayoutColumnStyle(column)">
+                {{ column.title }}
+              </th>
+            }
+            @for (column of rightFrozenColumns; track trackByColumn(index, column); let index = $index) {
+              <th class="px-4 py-3" [style]="getLayoutColumnStyle(column)">
+                {{ column.title }}
+              </th>
+            }
+          </tr>
+        </thead>
+
+        <!-- Second thead for visible sticky header -->
+        <thead #headerElement 
+               class="sticky z-40 border-b border-border"
+               [class.table-header-blur]="sticky()"
+               [style.top.px]="sticky() ? stickyTop : 0">
+          <tr>
+            <!-- Expand column header -->
+            @if (expandable()) {
+              <th class="w-12 px-4 py-3 sticky left-0 z-50 border-b border-border border-r-2 shadow-lg shadow-black/5 relative"
+                  [class.table-header-blur]="sticky()"
+                  [style.top.px]="sticky() ? stickyTop : 0">
+                <span class="sr-only">Expand</span>
+              </th>
+            }
+            
+            <!-- Left frozen columns -->
+            @for (column of leftFrozenColumns; track trackByColumn(index, column); let index = $index) {
+              <th [class]="getHeaderClasses(column)"
+                  [style]="getColumnStyle(column)"
+                  (click)="!loading() && column.sortable ? handleSort(column.key) : null">
+                <div class="flex items-center gap-2">
+                  <span [class]="column.ellipsis ? 'truncate' : ''">{{ column.title }}</span>
+                  @if (column.sortable) {
+                    <div class="flex flex-col">
+                      @if (sortState.field === column.key && sortState.direction === 'asc') {
+                        <svg width="14" height="14" viewBox="0 0 256 256" class="text-primary">
+                          <path fill="currentColor" d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80a8,8,0,0,1,11.32-11.32L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z" transform="rotate(180 128 128)"/>
+                        </svg>
+                      }
+                      @if (sortState.field === column.key && sortState.direction === 'desc') {
+                        <svg width="14" height="14" viewBox="0 0 256 256" class="text-primary">
+                          <path fill="currentColor" d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80a8,8,0,0,1,11.32-11.32L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/>
+                        </svg>
+                      }
+                      @if (!sortState.field || sortState.field !== column.key) {
+                        <div class="flex flex-col">
+                          <svg width="12" height="12" viewBox="0 0 256 256" class="text-muted-foreground">
+                            <path fill="currentColor" d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80a8,8,0,0,1,11.32-11.32L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z" transform="rotate(180 128 128)"/>
+                          </svg>
+                          <svg width="12" height="12" viewBox="0 0 256 256" class="text-muted-foreground -mt-1">
+                            <path fill="currentColor" d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80a8,8,0,0,1,11.32-11.32L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/>
+                          </svg>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              </th>
+            }
+            
+            <!-- Scrollable columns -->
+            @for (column of scrollableColumns; track trackByColumn(index, column); let index = $index) {
+              <th [class]="getHeaderClasses(column)"
+                  [style]="getColumnStyle(column)"
+                  (click)="!loading() && column.sortable ? handleSort(column.key) : null">
+                <div class="flex items-center gap-2">
+                  <span [class]="column.ellipsis ? 'truncate' : ''">{{ column.title }}</span>
+                  @if (column.sortable) {
+                    <div class="flex flex-col">
+                      @if (sortState.field === column.key && sortState.direction === 'asc') {
+                        <svg width="14" height="14" viewBox="0 0 256 256" class="text-primary">
+                          <path fill="currentColor" d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80a8,8,0,0,1,11.32-11.32L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z" transform="rotate(180 128 128)"/>
+                        </svg>
+                      }
+                      @if (sortState.field === column.key && sortState.direction === 'desc') {
+                        <svg width="14" height="14" viewBox="0 0 256 256" class="text-primary">
+                          <path fill="currentColor" d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80a8,8,0,0,1,11.32-11.32L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/>
+                        </svg>
+                      }
+                      @if (!sortState.field || sortState.field !== column.key) {
+                        <div class="flex flex-col">
+                          <svg width="12" height="12" viewBox="0 0 256 256" class="text-muted-foreground">
+                            <path fill="currentColor" d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80a8,8,0,0,1,11.32-11.32L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z" transform="rotate(180 128 128)"/>
+                          </svg>
+                          <svg width="12" height="12" viewBox="0 0 256 256" class="text-muted-foreground -mt-1">
+                            <path fill="currentColor" d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80a8,8,0,0,1,11.32-11.32L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/>
+                          </svg>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              </th>
+            }
+            
+            <!-- Right frozen columns -->
+            @for (column of rightFrozenColumns; track trackByColumn(index, column); let index = $index) {
+              <th [class]="getHeaderClasses(column)"
+                  [style]="getColumnStyle(column)"
+                  (click)="!loading() && column.sortable ? handleSort(column.key) : null">
+                <div class="flex items-center gap-2">
+                  <span [class]="column.ellipsis ? 'truncate' : ''">{{ column.title }}</span>
+                  @if (column.sortable) {
+                    <div class="flex flex-col">
+                      @if (sortState.field === column.key && sortState.direction === 'asc') {
+                        <svg width="14" height="14" viewBox="0 0 256 256" class="text-primary">
+                          <path fill="currentColor" d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80a8,8,0,0,1,11.32-11.32L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z" transform="rotate(180 128 128)"/>
+                        </svg>
+                      }
+                      @if (sortState.field === column.key && sortState.direction === 'desc') {
+                        <svg width="14" height="14" viewBox="0 0 256 256" class="text-primary">
+                          <path fill="currentColor" d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80a8,8,0,0,1,11.32-11.32L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/>
+                        </svg>
+                      }
+                      @if (!sortState.field || sortState.field !== column.key) {
+                        <div class="flex flex-col">
+                          <svg width="12" height="12" viewBox="0 0 256 256" class="text-muted-foreground">
+                            <path fill="currentColor" d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80a8,8,0,0,1,11.32-11.32L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z" transform="rotate(180 128 128)"/>
+                          </svg>
+                          <svg width="12" height="12" viewBox="0 0 256 256" class="text-muted-foreground -mt-1">
+                            <path fill="currentColor" d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80a8,8,0,0,1,11.32-11.32L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/>
+                          </svg>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              </th>
+            }
+          </tr>
+        </thead>

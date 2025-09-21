@@ -186,7 +186,7 @@ export class TableDemoComponent implements OnInit {
     console.log('Page changed:', event);
   }
 
-  onSort(event: {field: string, direction: 'asc' | 'desc' | null}): void {
+  onSort(event: {field: string | null, direction: 'asc' | 'desc' | null}): void {
     console.log('Sort changed:', event);
     this.sortState = {
       field: event.direction ? event.field : null,
