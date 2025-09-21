@@ -415,14 +415,16 @@ export class AdvancedTableComponent<T = any> implements OnInit, OnChanges, OnDes
   }
 
   getLayoutColumnStyle(column: TableColumn<T>): any {
-    // Determine column width - handle minWidth properly for flexible columns
+    // Determine column width - handle min/max constraints properly
     let columnWidth: string | number | undefined;
     if (column.width) {
+      // Fixed width takes precedence
       columnWidth = column.width;
-    } else if (column.minWidth && !column.maxWidth) {
-      // For columns with only minWidth, use minWidth as base but allow growth
-      columnWidth = column.minWidth;
+    } else if (column.minWidth || column.maxWidth) {
+      // For columns with min/max constraints, don't set width to allow CSS min/max to work
+      columnWidth = undefined;
     } else if (this.flexibleColumns > 0) {
+      // Only use 'auto' for truly flexible columns without constraints
       columnWidth = 'auto';
     } else {
       columnWidth = undefined;
@@ -516,14 +518,16 @@ export class AdvancedTableComponent<T = any> implements OnInit, OnChanges, OnDes
   }
 
   getColumnStyle(column: TableColumn<T>): any {
-    // Determine column width - handle minWidth properly for flexible columns
+    // Determine column width - handle min/max constraints properly
     let columnWidth: string | number | undefined;
     if (column.width) {
+      // Fixed width takes precedence
       columnWidth = column.width;
-    } else if (column.minWidth && !column.maxWidth) {
-      // For columns with only minWidth, use minWidth as base but allow growth
-      columnWidth = column.minWidth;
+    } else if (column.minWidth || column.maxWidth) {
+      // For columns with min/max constraints, don't set width to allow CSS min/max to work
+      columnWidth = undefined;
     } else if (this.flexibleColumns > 0) {
+      // Only use 'auto' for truly flexible columns without constraints
       columnWidth = 'auto';
     } else {
       columnWidth = undefined;
@@ -575,14 +579,16 @@ export class AdvancedTableComponent<T = any> implements OnInit, OnChanges, OnDes
   }
 
   getCellStyle(column: TableColumn<T>): any {
-    // Determine column width - handle minWidth properly for flexible columns
+    // Determine column width - handle min/max constraints properly
     let columnWidth: string | number | undefined;
     if (column.width) {
+      // Fixed width takes precedence
       columnWidth = column.width;
-    } else if (column.minWidth && !column.maxWidth) {
-      // For columns with only minWidth, use minWidth as base but allow growth
-      columnWidth = column.minWidth;
+    } else if (column.minWidth || column.maxWidth) {
+      // For columns with min/max constraints, don't set width to allow CSS min/max to work
+      columnWidth = undefined;
     } else if (this.flexibleColumns > 0) {
+      // Only use 'auto' for truly flexible columns without constraints
       columnWidth = 'auto';
     } else {
       columnWidth = undefined;
