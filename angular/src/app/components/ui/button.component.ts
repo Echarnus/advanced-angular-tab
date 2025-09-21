@@ -1,20 +1,17 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-button',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <button [class]="buttonClasses" [disabled]="disabled">
-      <ng-content></ng-content>
-    </button>
-  `
+  templateUrl: './button.component.html',
+  styleUrl: './button.component.css'
 })
 export class ButtonComponent {
-  @Input() variant: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link' = 'default';
-  @Input() size: 'default' | 'sm' | 'lg' | 'icon' = 'default';
-  @Input() disabled = false;
+  variant = input<'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'>('default');
+  size = input<'default' | 'sm' | 'lg' | 'icon'>('default');
+  disabled = input<boolean>(false);
 
   get buttonClasses(): string {
     const baseClasses = 'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]';
@@ -35,6 +32,6 @@ export class ButtonComponent {
       icon: 'size-9'
     };
 
-    return `${baseClasses} ${variantClasses[this.variant]} ${sizeClasses[this.size]}`;
+    return `${baseClasses} ${variantClasses[this.variant()]} ${sizeClasses[this.size()]}`;
   }
 }

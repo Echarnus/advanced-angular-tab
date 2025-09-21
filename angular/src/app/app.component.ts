@@ -5,7 +5,8 @@ import { ThemeService } from './services/theme.service';
 @Component({
   selector: 'app-root',
   imports: [TableDemoComponent],
-  template: `<app-table-demo></app-table-demo>`
+  templateUrl: './app.component.html',
+  styleUrl: './app.component.css'
 })
 export class AppComponent implements OnInit {
   title = 'angular';
