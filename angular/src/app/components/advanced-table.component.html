@@ -1,0 +1,192 @@
+<div [class]="'flex flex-col ' + (className() || '')">
+  <div class="flex flex-col relative border rounded-lg bg-card">
+    <!-- Loading overlay -->
+    @if (loading()) {
+      <div class="absolute inset-0 z-[100] flex items-center justify-center bg-card/90 backdrop-blur-md">
+        <div class="bg-card/90 backdrop-blur-md rounded-lg px-6 py-4 shadow-lg border border-border">
+          <div class="flex items-center gap-3">
+            <div class="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full"></div>
+            <span class="text-sm font-medium text-foreground">Loading data...</span>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Table container -->
+    <div #tableContainer class="overflow-x-auto flex-1 scrollbar-visible" [style.max-height]="scroll()?.y">
+      <table [class]="getTableClasses()" [style.min-width]="scroll()?.x">
+        
+        <!-- Table header -->
+        <thead #headerElement 
+               class="sticky z-40 border-b border-border"
+               [class.table-header-blur]="sticky()"
+               [style.top.px]="sticky() ? stickyTop : 0">
+          <tr>
+            <!-- Expand column header -->
+            @if (expandable()) {
+              <th class="w-12 px-4 py-3 sticky left-0 z-50 border-b border-border border-r-2 shadow-lg shadow-black/5 relative"
+                  [class.table-header-blur]="sticky()"
+                  [style.top.px]="sticky() ? stickyTop : 0">
+                <span class="sr-only">Expand</span>
+              </th>
+            }
+            
+            <!-- Column headers -->
+            @for (column of columns(); track trackByColumn($index, column)) {
+              <th [class]="getHeaderClasses(column)"
+                  [style]="getColumnStyle(column)"
+                  (click)="!loading() && column.sortable ? handleSort(column.key) : null">
+                <div class="flex items-center gap-2">
+                  <span [class]="column.ellipsis ? 'truncate' : ''">{{ column.title }}</span>
+                  @if (column.sortable) {
+                    <div class="flex flex-col">
+                      @if (sortState.field === column.key && sortState.direction === 'asc') {
+                        <svg width="14" height="14" viewBox="0 0 256 256" class="text-primary">
+                          <path fill="currentColor" d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80a8,8,0,0,1,11.32-11.32L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z" transform="rotate(180 128 128)"/>
+                        </svg>
+                      }
+                      @if (sortState.field === column.key && sortState.direction === 'desc') {
+                        <svg width="14" height="14" viewBox="0 0 256 256" class="text-primary">
+                          <path fill="currentColor" d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80a8,8,0,0,1,11.32-11.32L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/>
+                        </svg>
+                      }
+                      @if (!sortState.field || sortState.field !== column.key) {
+                        <div class="flex flex-col">
+                          <svg width="12" height="12" viewBox="0 0 256 256" class="text-muted-foreground">
+                            <path fill="currentColor" d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80a8,8,0,0,1,11.32-11.32L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z" transform="rotate(180 128 128)"/>
+                          </svg>
+                          <svg width="12" height="12" viewBox="0 0 256 256" class="text-muted-foreground -mt-1">
+                            <path fill="currentColor" d="m213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80a8,8,0,0,1,11.32-11.32L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/>
+                          </svg>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              </th>
+            }
+          </tr>
+        </thead>
+        
+        <!-- Table body -->
+        <tbody>
+          @if (data().length === 0) {
+            <tr>
+              <td [colSpan]="columns().length + (expandable() ? 1 : 0)"
+                  class="py-8 text-center text-muted-foreground">
+                No data available
+              </td>
+            </tr>
+          } @else {
+            @for (row of paginatedData; track trackByRow($index, row)) {
+              <!-- Main row -->
+              <tr class="table-row hover:bg-muted/50 transition-colors"
+                  [class.cursor-pointer]="expandable()?.expandRowByClick"
+                  (click)="expandable()?.expandRowByClick ? toggleExpanded(row) : null">
+                
+                <!-- Expand button -->
+                @if (expandable()) {
+                  <td class="px-4 py-3 sticky left-0 z-30 w-12 border-r-2 shadow-lg shadow-black/5 relative transition-colors"
+                      [class.table-cell-blur]="sticky()">
+                    @if (!expandable()?.expandRowByClick) {
+                      <app-button variant="ghost" 
+                                  size="sm" 
+                                  class="h-6 w-6 p-0"
+                                  (click)="toggleExpanded(row)">
+                        @if (!isExpanded(row)) {
+                          <svg width="14" height="14" viewBox="0 0 256 256">
+                            <path fill="currentColor" d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"/>
+                          </svg>
+                        }
+                        @if (isExpanded(row)) {
+                          <svg width="14" height="14" viewBox="0 0 256 256">
+                            <path fill="currentColor" d="M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128Z"/>
+                          </svg>
+                        }
+                      </app-button>
+                    } @else {
+                      <div class="flex items-center justify-center h-6 w-6">
+                        @if (!isExpanded(row)) {
+                          <svg width="14" height="14" viewBox="0 0 256 256" class="text-muted-foreground">
+                            <path fill="currentColor" d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"/>
+                          </svg>
+                        }
+                        @if (isExpanded(row)) {
+                          <svg width="14" height="14" viewBox="0 0 256 256" class="text-muted-foreground">
+                            <path fill="currentColor" d="M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128Z"/>
+                          </svg>
+                        }
+                      </div>
+                    }
+                  </td>
+                }
+                
+                <!-- Data columns -->
+                @for (column of columns(); track trackByColumn($index, column)) {
+                  <td [class]="getCellClasses(column)"
+                      [style]="getCellStyle(column)">
+                    <div [class]="getCellContentClasses(column)"
+                         [title]="column.ellipsis ? getCellContent(row, column, $index) : null"
+                         [innerHTML]="getCellContent(row, column, $index)">
+                    </div>
+                  </td>
+                }
+              </tr>
+              
+              <!-- Expanded row -->
+              @if (isExpanded(row)) {
+                <tr class="expanded-row">
+                  <td [colSpan]="columns().length + (expandable() ? 1 : 0)"
+                      class="px-4 py-4 bg-muted/25">
+                    <div [innerHTML]="expandable()?.expandedRowRender?.(row, $index) || ''"></div>
+                  </td>
+                </tr>
+              }
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    @if (pagination()?.showPagination !== false) {
+      <div class="flex items-center justify-between px-4 py-3 border-t border-border bg-card">
+        <div class="flex items-center gap-4">
+          <span class="text-sm text-muted-foreground">
+            Showing {{ startItem }} to {{ endItem }} of {{ pagination()?.total || 0 }} results
+          </span>
+          @if (pagination()?.showSizeChanger) {
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-muted-foreground">Show</span>
+              <select [(ngModel)]="currentPageSize" 
+                      (change)="onPageSizeChange()" 
+                      class="w-20 h-8 rounded-md border border-input bg-background px-3 py-1 text-sm">
+                @for (size of pagination()?.pageSizeOptions || [10, 20, 50]; track size) {
+                  <option [value]="size">{{ size }}</option>
+                }
+              </select>
+            </div>
+          }
+        </div>
+        
+        <div class="flex items-center gap-2">
+          <app-button variant="outline" size="sm" [disabled]="currentPage <= 1" (click)="onPrevPage()">
+            <svg width="16" height="16" viewBox="0 0 256 256">
+              <path fill="currentColor" d="m221.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L204.69,128,130.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,221.66,133.66Z" transform="rotate(180 128 128)"/>
+            </svg>
+          </app-button>
+          
+          <span class="text-sm text-muted-foreground">
+            Page {{ currentPage }} of {{ totalPages }}
+          </span>
+          
+          <app-button variant="outline" size="sm" [disabled]="currentPage >= totalPages" (click)="onNextPage()">
+            <svg width="16" height="16" viewBox="0 0 256 256">
+              <path fill="currentColor" d="m221.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L204.69,128,130.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,221.66,133.66Z"/>
+            </svg>
+          </app-button>
+        </div>
+      </div>
+    }
+  </div>
+</div>
