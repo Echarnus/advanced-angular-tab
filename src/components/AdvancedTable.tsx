@@ -186,14 +186,16 @@ export function AdvancedTable<T extends Record<string, any>>({
       }
     }
 
-    // Determine column width - handle minWidth properly for flexible columns
+    // Determine column width - handle min/max constraints properly
     let columnWidth: string | number | undefined;
     if (column.width) {
+      // Fixed width takes precedence
       columnWidth = column.width;
-    } else if (column.minWidth && !column.maxWidth) {
-      // For columns with only minWidth, use minWidth as base but allow growth
-      columnWidth = column.minWidth;
+    } else if (column.minWidth || column.maxWidth) {
+      // For columns with min/max constraints, don't set width to allow CSS min/max to work
+      columnWidth = undefined;
     } else if (flexibleColumns > 0) {
+      // Only use 'auto' for truly flexible columns without constraints
       columnWidth = 'auto';
     } else {
       columnWidth = undefined;
@@ -279,14 +281,16 @@ export function AdvancedTable<T extends Record<string, any>>({
       }
     }
 
-    // Determine column width - handle minWidth properly for flexible columns
+    // Determine column width - handle min/max constraints properly
     let columnWidth: string | number | undefined;
     if (column.width) {
+      // Fixed width takes precedence
       columnWidth = column.width;
-    } else if (column.minWidth && !column.maxWidth) {
-      // For columns with only minWidth, use minWidth as base but allow growth
-      columnWidth = column.minWidth;
+    } else if (column.minWidth || column.maxWidth) {
+      // For columns with min/max constraints, don't set width to allow CSS min/max to work
+      columnWidth = undefined;
     } else if (flexibleColumns > 0) {
+      // Only use 'auto' for truly flexible columns without constraints
       columnWidth = 'auto';
     } else {
       columnWidth = undefined;
@@ -442,45 +446,54 @@ export function AdvancedTable<T extends Record<string, any>>({
                 {expandable && (
                   <th className="w-12 px-4 py-3" />
                 )}
-                {leftFrozenColumns.map(column => (
-                  <th
-                    key={`layout-${column.key}`}
-                    style={{
-                      width: column.width || (flexibleColumns > 0 ? 'auto' : undefined),
-                      minWidth: column.minWidth,
-                      maxWidth: column.maxWidth
-                    }}
-                    className="px-4 py-3"
-                  >
-                    {column.title}
-                  </th>
-                ))}
-                {scrollableColumns.map(column => (
-                  <th
-                    key={`layout-${column.key}`}
-                    style={{
-                      width: column.width || (flexibleColumns > 0 ? 'auto' : undefined),
-                      minWidth: column.minWidth,
-                      maxWidth: column.maxWidth
-                    }}
-                    className="px-4 py-3"
-                  >
-                    {column.title}
-                  </th>
-                ))}
-                {rightFrozenColumns.map(column => (
-                  <th
-                    key={`layout-${column.key}`}
-                    style={{
-                      width: column.width || (flexibleColumns > 0 ? 'auto' : undefined),
-                      minWidth: column.minWidth,
-                      maxWidth: column.maxWidth
-                    }}
-                    className="px-4 py-3"
-                  >
-                    {column.title}
-                  </th>
-                ))}
+                {leftFrozenColumns.map(column => {
+                  const columnWidth = column.width || (column.minWidth || column.maxWidth ? undefined : (flexibleColumns > 0 ? 'auto' : undefined));
+                  return (
+                    <th
+                      key={`layout-${column.key}`}
+                      style={{
+                        width: columnWidth,
+                        minWidth: column.minWidth,
+                        maxWidth: column.maxWidth
+                      }}
+                      className="px-4 py-3"
+                    >
+                      {column.title}
+                    </th>
+                  );
+                })}
+                {scrollableColumns.map(column => {
+                  const columnWidth = column.width || (column.minWidth || column.maxWidth ? undefined : (flexibleColumns > 0 ? 'auto' : undefined));
+                  return (
+                    <th
+                      key={`layout-${column.key}`}
+                      style={{
+                        width: columnWidth,
+                        minWidth: column.minWidth,
+                        maxWidth: column.maxWidth
+                      }}
+                      className="px-4 py-3"
+                    >
+                      {column.title}
+                    </th>
+                  );
+                })}
+                {rightFrozenColumns.map(column => {
+                  const columnWidth = column.width || (column.minWidth || column.maxWidth ? undefined : (flexibleColumns > 0 ? 'auto' : undefined));
+                  return (
+                    <th
+                      key={`layout-${column.key}`}
+                      style={{
+                        width: columnWidth,
+                        minWidth: column.minWidth,
+                        maxWidth: column.maxWidth
+                      }}
+                      className="px-4 py-3"
+                    >
+                      {column.title}
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
             
