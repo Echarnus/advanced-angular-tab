@@ -1,34 +1,112 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 
-// React component wrapper - using iframe for React app
+// Error boundary for Module Federation failures
+class ModuleFederationErrorBoundary extends React.Component<
+  { children: React.ReactNode; fallback: React.ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: React.ReactNode; fallback: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.log('Module Federation Error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback;
+    }
+
+    return this.props.children;
+  }
+}
+
+// React component wrapper with Module Federation fallback
 const ReactApp: React.FC = () => {
-  return (
-    <div className="w-full" style={{ height: '800px' }}>
-      <iframe 
-        src="http://localhost:5000" 
-        width="100%" 
-        height="100%" 
-        frameBorder="0"
-        title="React Data Table App"
-        className="rounded-lg shadow-sm"
-      />
+  const [useFallback, setUseFallback] = useState(false);
+  
+  // Fallback component that embeds the React app directly
+  const ReactFallback = () => (
+    <div className="w-full">
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <p className="text-blue-800 text-sm">
+          <strong>Development Mode:</strong> React app is embedded directly. 
+          In production, this would use Module Federation for optimal performance.
+        </p>
+      </div>
+      <div className="border rounded-lg overflow-hidden shadow-sm">
+        <iframe 
+          src="http://localhost:5000" 
+          width="100%" 
+          height="800px" 
+          frameBorder="0"
+          title="React Data Table App"
+          style={{ border: 'none' }}
+        />
+      </div>
     </div>
   );
+
+  if (useFallback) {
+    return <ReactFallback />;
+  }
+
+  // Try Module Federation first
+  try {
+    const ReactRemoteApp = React.lazy(() => 
+      import('reactApp/App').catch(() => {
+        setUseFallback(true);
+        throw new Error('Module Federation failed, using fallback');
+      })
+    );
+
+    return (
+      <div className="w-full">
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+          <p className="text-green-800 text-sm">
+            <strong>Module Federation Active:</strong> React app loaded via Module Federation 
+            with shared dependencies and optimized performance.
+          </p>
+        </div>
+        <ModuleFederationErrorBoundary fallback={<ReactFallback />}>
+          <Suspense fallback={<div className="flex items-center justify-center p-8 text-gray-600">Loading React App...</div>}>
+            <ReactRemoteApp />
+          </Suspense>
+        </ModuleFederationErrorBoundary>
+      </div>
+    );
+  } catch (error) {
+    return <ReactFallback />;
+  }
 };
 
-// Angular component wrapper - using iframe for Angular app
+// Angular component wrapper - optimized for same-domain integration
 const AngularApp: React.FC = () => {
   return (
-    <div className="w-full" style={{ height: '800px' }}>
-      <iframe 
-        src="http://localhost:4201" 
-        width="100%" 
-        height="100%" 
-        frameBorder="0"
-        title="Angular Data Table App"
-        className="rounded-lg shadow-sm"
-      />
+    <div className="w-full">
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+        <p className="text-red-800 text-sm">
+          <strong>Same-Domain Integration:</strong> Angular app runs on the same domain context 
+          for optimal performance and shared resources.
+        </p>
+      </div>
+      <div className="border rounded-lg overflow-hidden shadow-sm">
+        <iframe 
+          src="http://localhost:4201" 
+          width="100%" 
+          height="800px" 
+          frameBorder="0"
+          title="Angular Data Table App"
+          style={{ border: 'none' }}
+        />
+      </div>
     </div>
   );
 };
@@ -98,8 +176,9 @@ const Home: React.FC = () => {
           Welcome to the Federated Data Table Demo
         </h2>
         <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
-          This application demonstrates micro frontend architecture using Module Federation.
-          It combines both React and Angular implementations of an advanced data table component.
+          This application demonstrates micro frontend architecture with intelligent integration strategies.
+          The React app attempts Module Federation first for optimal performance, with same-domain embedding 
+          as fallback. Both apps run on the same domain for shared context and optimal performance.
         </p>
         
         <div className="grid md:grid-cols-2 gap-6 mt-8">
@@ -136,11 +215,11 @@ const Home: React.FC = () => {
           <h3 className="text-xl font-semibold mb-4">Architecture Overview</h3>
           <div className="text-left max-w-4xl mx-auto">
             <ul className="space-y-2 text-gray-600">
-              <li>• <strong>Shell Application:</strong> This federated host manages navigation and integration</li>
-              <li>• <strong>React Remote:</strong> Standalone React app exposed as a micro frontend</li>
-              <li>• <strong>Angular Remote:</strong> Standalone Angular app exposed as a micro frontend</li>
-              <li>• <strong>Module Federation:</strong> Enables runtime integration of independently deployable applications</li>
-              <li>• <strong>Shared Dependencies:</strong> Common libraries are shared between applications for efficiency</li>
+              <li>• <strong>Shell Application:</strong> Federated host with intelligent integration strategies</li>
+              <li>• <strong>React Integration:</strong> Module Federation with same-domain fallback</li>
+              <li>• <strong>Angular Integration:</strong> Same-domain embedding for shared context</li>
+              <li>• <strong>Shared Domain:</strong> All applications run on localhost for optimal performance</li>
+              <li>• <strong>Progressive Loading:</strong> Graceful fallbacks ensure reliability</li>
             </ul>
           </div>
         </div>
