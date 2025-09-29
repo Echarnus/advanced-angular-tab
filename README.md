@@ -1,11 +1,16 @@
-# Advanced Data Table - React & Angular Implementations
+# Advanced Data Table - React, Angular & Federated Implementations
 
-This repository contains two complete implementations of an advanced data table component - one in React and one in Angular 19.
+This repository contains three complete implementations of an advanced data table component:
+
+1. **React Implementation** (root directory) - Modern React 19 with Vite
+2. **Angular Implementation** (angular/ directory) - Angular 19 with standalone components  
+3. **Federated Implementation** (federated/ directory) - Micro frontend shell combining both apps
 
 ## 🚀 Live Demos
 
 - **React Demo**: Available locally at `http://localhost:5000` (when running `npm run dev`)
 - **Angular Demo**: [https://echarnus.github.io/advanced-angular-tab/](https://echarnus.github.io/advanced-angular-tab/)
+- **Federated Demo**: Available locally at `http://localhost:3000` (see federated setup instructions)
 
 ## 📱 Screenshots
 
@@ -54,6 +59,11 @@ Both implementations provide identical functionality:
 │   │   │   └── data.service.ts
 │   │   └── types/
 │   │       └── table.types.ts
+├── federated/             # Federated micro frontend shell
+│   ├── src/
+│   │   ├── App.tsx        # Shell application
+│   │   └── main.tsx
+│   └── README.md          # Federated setup guide
 └── .github/workflows/     # GitHub Pages deployment
     └── deploy.yml
 ```
@@ -72,6 +82,13 @@ Both implementations provide identical functionality:
 - **TailwindCSS**: Utility-first CSS framework
 - **TypeScript**: Strongly typed JavaScript
 - **Phosphor Icons**: Beautiful icon set
+
+### Federated Version
+- **Module Federation**: Webpack Module Federation for micro frontend architecture
+- **React 19**: Shell application built with React
+- **Vite**: Fast build tool and dev server  
+- **React Router**: Navigation between micro frontends
+- **TailwindCSS**: Consistent styling across applications
 
 ## 🚀 Getting Started
 
@@ -103,6 +120,31 @@ npm run build
 
 # Build for GitHub Pages
 npm run build -- --configuration=github-pages
+```
+
+### Federated Development
+```bash
+# Navigate to federated project
+cd federated
+
+# Install dependencies
+npm install
+
+# Option 1: Start all applications individually
+# Terminal 1: React app
+cd ../ && npm run dev
+
+# Terminal 2: Angular app  
+cd ../angular && npm start
+
+# Terminal 3: Federated shell
+cd ../federated && npm run dev
+
+# Option 2: Start all applications with one command (requires concurrently)
+npm run dev:all
+
+# Build all applications
+npm run build:all
 ```
 
 ## 📊 Sample Data
